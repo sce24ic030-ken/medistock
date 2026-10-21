@@ -188,14 +188,31 @@ const App = {
         const content = document.querySelector('.app-content');
         if (!content) return;
 
+        // When the page and the API live on different sites the browser treats
+        // the session cookie as a third-party cookie and can refuse to send it.
+        let apiOrigin = window.location.origin;
+        try {
+            apiOrigin = new URL(API_BASE_URL || '', window.location.href).origin;
+        } catch (error) {
+            apiOrigin = window.location.origin;
+        }
+
+        const advice = apiOrigin !== window.location.origin
+            ? '<p class="mb-3">This page runs on <code>' + App.escape(window.location.origin) +
+              '</code> while the API runs on <code>' + App.escape(apiOrigin) +
+              '</code>, so the browser blocked the session cookie. ' +
+              'Open the app directly on the API address (<code>' + App.escape(apiOrigin) +
+              '/index.html</code>) or allow third-party cookies for this site.</p>'
+            : '<p class="mb-3">Open the app and the API on the same address ' +
+              '(for example <code>http://127.0.0.1:5000</code>) and sign in again.</p>';
+
         content.innerHTML =
             '<div class="empty-state">' +
             '<i class="fas fa-plug-circle-xmark"></i>' +
             '<h3>The session could not be kept</h3>' +
             '<p>Medistock signed you in, but the API did not store the session cookie, ' +
             'so every page sent you straight back to the login screen.</p>' +
-            '<p class="mb-3">Open the app and the API on the same address ' +
-            '(for example <code>http://127.0.0.1:5000</code>) and sign in again.</p>' +
+            advice +
             '<a class="btn btn-primary" href="index.html">Back to sign in</a>' +
             '</div>';
     },

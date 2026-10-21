@@ -149,8 +149,8 @@ The rules are enforced twice: the sidebar and the page buttons hide what a role 
 The repository also contains a `render.yaml` blueprint, so the same two services can be
 recreated from the Render dashboard in one click:
 
-1. **Backend (Web Service)** — `backend/` root, build `pip install -r requirements.txt`,
-   start `gunicorn app:app`, health check `/api/health`, pre-deploy `python seed.py`
+1. **Backend (Web Service)** — repository root, build `pip install -r backend/requirements.txt`,
+   start `gunicorn --chdir backend app:app`, health check `/api/health`, pre-deploy `python seed.py`
    (seeds the demo database on every deploy).
    Environment variables: `SECRET_KEY`, `JWT_SECRET_KEY`, `FRONTEND_URL`,
    `EXTRA_ORIGINS` and — for Aiven MySQL — `DB_HOST`, `DB_PORT`, `DB_USER`,
@@ -158,6 +158,22 @@ recreated from the Render dashboard in one click:
 2. **Frontend (Static Site)** — `frontend/` root, publish path `./`.
    `js/config.js` automatically targets the live API for any non-local hostname;
    a local copy keeps using `http://127.0.0.1:5000`.
+
+The API also serves the `frontend/` folder itself, so the whole app can be opened on a
+single address (`https://medistock-api-zudg.onrender.com/`). That is the recommended
+link: page and API share one origin, the session cookie stays a normal first-party
+cookie and no cross-site rules are involved at all.
+
+> **The "logged in but back at the login screen" loop on the split deployment**
+> `onrender.com` is a public suffix, so `medistock-web.onrender.com` and
+> `medistock-api-zudg.onrender.com` are *different sites* for the browser. A
+> session cookie without an explicit `SameSite` attribute counts as `Lax`, and a
+> `Lax` cookie is never sent on the cross-site `fetch` calls the static site
+> makes — the API answers `401` and the user is bounced back to the login form.
+> `backend/app.py` therefore sends `SameSite=None; Secure` automatically on any
+> public https host (and keeps plain `Lax` for local development). Setting
+> `SESSION_COOKIE_SAMESITE=None` / `SESSION_COOKIE_SECURE=true` in the service
+> environment does the same thing explicitly.
 
 > The live instance currently stores its data in SQLite (the Render filesystem).
 > Adding the Aiven MySQL environment variables above switches the backend to

@@ -8,9 +8,12 @@ services:
   - type: web
     name: medistock-api
     runtime: python
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    # The whole repository is uploaded (no rootDir) so the API can also serve
+    # the frontend from the same origin. One origin means the session cookie
+    # is a normal first-party cookie and no CORS/cookie dance is needed.
+    # Start command runs from the backend/ folder where app.py lives.
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn --chdir backend app:app
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:

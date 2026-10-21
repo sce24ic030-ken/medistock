@@ -48,8 +48,15 @@ class Config:
     # frontend is hosted separately the cookie therefore has to be sent as
     # "SameSite=None; Secure". (Local development stays on plain Lax because
     # both halves run on 127.0.0.1.)
-    SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE') or 'Lax'
-    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
+    SESSION_COOKIE_SAMESITE_ENV = os.environ.get('SESSION_COOKIE_SAMESITE')
+    SESSION_COOKIE_SECURE_ENV = os.environ.get('SESSION_COOKIE_SECURE')
+    # True when the deployment explicitly configured the cookie flags. When it
+    # did not, the app decides by itself (see app.py): a public https host gets
+    # "SameSite=None; Secure" so the cookie survives the cross-site calls of
+    # the split static-site / API deployment.
+    SESSION_COOKIE_EXPLICIT = bool(SESSION_COOKIE_SAMESITE_ENV or SESSION_COOKIE_SECURE_ENV)
+    SESSION_COOKIE_SAMESITE = SESSION_COOKIE_SAMESITE_ENV or 'Lax'
+    SESSION_COOKIE_SECURE = (SESSION_COOKIE_SECURE_ENV or 'false').lower() == 'true'
     if str(SESSION_COOKIE_SAMESITE).lower() == 'none':
         # SameSite=None is only honoured together with the Secure flag.
         SESSION_COOKIE_SECURE = True

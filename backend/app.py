@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
 from config import Config
 from models import db
@@ -45,7 +45,9 @@ db.init_app(app)
 # The frontend may be served from any local port during development
 # (Live Server on 5500, VS Code on 8080, python -m http.server on 8000, ...),
 # so every loopback origin is allowed with credentials. The deployed origins
-# still come from FRONTEND_URL / EXTRA_ORIGINS.
+# still come from FRONTEND_URL / EXTRA_ORIGINS; the public Render host of this
+# project is allowed as well so a deployment without dashboard environment
+# variables still works.
 CORS(app, supports_credentials=True, resources={r"/api/*": {
     "origins": [
         app.config['FRONTEND_URL'],
@@ -53,9 +55,83 @@ CORS(app, supports_credentials=True, resources={r"/api/*": {
         'http://localhost:8080', 'http://127.0.0.1:8080',
         'http://localhost:8000', 'http://127.0.0.1:8000',
         'http://localhost:3000', 'http://127.0.0.1:3000',
-        r'http://localhost:\d+', r'http://127\.0\.0\.1:\d+'
+        r'http://localhost:\d+', r'http://127\.0\.0\.1:\d+',
+        'https://medistock-web.onrender.com',
+        r'https://[\w-]+\.onrender\.com'
     ] + app.config.get('EXTRA_ORIGINS', [])
 }})
+
+
+# ---------------------------------------------------------------------------
+# Session cookie flags
+# ---------------------------------------------------------------------------
+# "onrender.com" is a public suffix, so https://medistock-web.onrender.com and
+# https://medistock-api-zudg.onrender.com are *different sites* for the
+# browser. A cookie without an explicit SameSite attribute counts as Lax and
+# browsers then refuse to send it on the cross-site fetch calls the frontend
+# makes - the API answers 401 and the user is bounced back to the login form
+# over and over.
+#
+# Therefore a public https deployment gets "SameSite=None; Secure" (the only
+# combination a browser accepts for a cross-site cookie) while local
+# development stays on plain Lax. An explicit environment variable always
+# wins, so a deployment can still override the behaviour.
+LOOPBACK_HOSTS = ('localhost', '127.0.0.1', '0.0.0.0', '::1')
+
+
+def _is_cross_site_deployment():
+    """True when the request comes from a public https host (the deployment)."""
+    host = (request.host or '').split(':')[0].lower()
+    if host in LOOPBACK_HOSTS:
+        return False
+    if host.replace('.', '').isdigit():
+        # A bare IP address does not guarantee that https is available.
+        return False
+    proto = request.headers.get('X-Forwarded-Proto', request.scheme)
+    return proto == 'https'
+
+
+@app.before_request
+def _apply_session_cookie_flags():
+    """Let Flask build the session cookie with the right flags."""
+    if app.config.get('SESSION_COOKIE_EXPLICIT'):
+        return
+    if _is_cross_site_deployment():
+        app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+        app.config['SESSION_COOKIE_SECURE'] = True
+    else:
+        # Local development keeps the plain, first-party cookie.
+        app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+        app.config['SESSION_COOKIE_SECURE'] = False
+
+
+@app.after_request
+def _enforce_session_cookie_flags(response):
+    """Safety net: make sure the session cookie really carries the flags.
+
+    Browsers silently drop a cookie that is stored from a cross-site response
+    without "SameSite=None; Secure", so the header is patched directly in case
+    the session was written before the flags were applied.
+    """
+    if app.config.get('SESSION_COOKIE_EXPLICIT'):
+        return response
+    if not _is_cross_site_deployment():
+        return response
+
+    for header, value in list(response.headers.items()):
+        if header.lower() != 'set-cookie':
+            continue
+        if not value.startswith('session='):
+            continue
+        parts = [p.strip() for p in value.split(';')]
+        names = {p.split('=')[0].strip().lower() for p in parts[1:] if '=' in p}
+        if 'samesite' not in names:
+            parts.append('SameSite=None')
+        if 'secure' not in names:
+            parts.append('Secure')
+        response.headers[header] = '; '.join(parts)
+
+    return response
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
