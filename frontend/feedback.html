@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback | Medistock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-body" data-page-title="Feedback" data-page-sub="Rate the system and read recent comments">
+        <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <a class="app-brand" href="dashboard.html">
+                <span class="app-brand-mark"><i class="fas fa-pills"></i></span>
+                <span class="app-brand-text">Medistock<small>Smart Medicine Inventory</small></span>
+            </a>
+
+            <nav class="app-nav" aria-label="Main navigation">
+                <span class="app-nav-label">Overview</span>
+                <a class="app-nav-link" href="dashboard.html"><i class="fas fa-chart-line"></i><span>Dashboard</span>
+                </a>
+                <a class="app-nav-link" href="medicines.html"><i class="fas fa-capsules"></i><span>Medicines</span>
+                </a>
+                <a class="app-nav-link" href="cart.html"><i class="fas fa-shopping-basket"></i><span>Cart</span>
+                    <span class="app-nav-badge" id="cartCount">0</span>
+                </a>
+                <span class="app-nav-label">Engagement</span>
+                <a class="app-nav-link active" href="feedback.html"><i class="fas fa-comment-medical"></i><span>Feedback</span>
+                </a>
+                <a class="app-nav-link" href="faqs.html"><i class="fas fa-question-circle"></i><span>FAQs & Contact</span>
+                </a>
+                <a class="app-nav-link" href="reports.html"><i class="fas fa-file-alt"></i><span>Reports</span>
+                </a>
+            </nav>
+
+            <div class="app-sidebar-foot">
+                <div class="app-user">
+                    <span class="app-avatar"><i class="fas fa-user"></i></span>
+                    <span class="app-user-meta">
+                        <strong id="userName">User</strong>
+                        <small>Signed in</small>
+                    </span>
+                </div>
+                <a class="app-logout" href="#" onclick="logout()" title="Log out" aria-label="Log out">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main column -->
+        <div class="app-main">
+            <header class="app-topbar">
+                <button class="app-burger" id="appBurger" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="app-topbar-title">
+                    <h1 id="appPageTitle">Feedback</h1>
+                    <p id="appPageSub">Rate the system and read recent comments</p>
+                </div>
+                <div class="app-topbar-actions">
+                    <span class="app-live"><span class="app-live-dot"></span> Live</span>
+                    <span class="app-clock" id="appClock"></span>
+                    <a class="app-icon-btn" href="cart.html" title="Cart"><i class="fas fa-cart-shopping"></i></a>
+                    <a class="app-icon-btn" href="reports.html" title="Reports"><i class="fas fa-chart-line"></i></a>
+                </div>
+            </header>
+
+            <main class="app-content">
+                <h2 class="mb-4"><i class="fas fa-star"></i> Feedback</h2>
+
+                <div class="row">
+                    <div class="col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header"><i class="fas fa-comment-dots"></i> Share Your Feedback</div>
+                            <div class="card-body">
+                                <div id="alertBox"></div>
+                                <form id="feedbackForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Name</label>
+                                        <input type="text" class="form-control" id="fbName" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="fbEmail" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Rating</label>
+                                        <div class="star-rating" id="starRating">
+                                            <i class="far fa-star" data-rating="1"></i>
+                                            <i class="far fa-star" data-rating="2"></i>
+                                            <i class="far fa-star" data-rating="3"></i>
+                                            <i class="far fa-star" data-rating="4"></i>
+                                            <i class="far fa-star" data-rating="5"></i>
+                                        </div>
+                                        <input type="hidden" id="rating" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Comment</label>
+                                        <textarea class="form-control" id="fbComment" rows="4" required></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Feedback</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header"><i class="fas fa-comments"></i> Recent Feedback</div>
+                            <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                                <div id="feedbackList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            
+            </main>
+        </div>
+    </div>
+
+    <div class="app-scrim" id="appScrim"></div>
+
+    <style>
+        .star-rating i {
+            font-size: 1.8rem;
+            color: #f39c12;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/feedback.js"></script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Alerts | Medistock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-body" data-page-title="Smart Alerts" data-page-sub="Expiry, low stock and critical stock warnings in one place">
+    <div class="app-shell">
+        <aside class="app-sidebar" id="appSidebar"></aside>
+
+        <div class="app-main">
+            <header class="app-topbar">
+                <button class="app-burger" id="appBurger" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="app-topbar-title">
+                    <h1 id="appPageTitle">Smart Alerts</h1>
+                    <p id="appPageSub">Expiry, low stock and critical stock warnings in one place</p>
+                </div>
+                <div class="app-topbar-actions">
+                    <span class="app-live"><span class="app-live-dot"></span> Live</span>
+                    <span class="app-clock" id="appClock"></span>
+                    <a class="app-icon-btn" href="cart.html" title="Cart"><i class="fas fa-cart-shopping"></i></a>
+                    <a class="app-icon-btn" href="reports.html" title="Reports"><i class="fas fa-chart-line"></i></a>
+                </div>
+            </header>
+
+            <main class="app-content">
+                <div class="page-toolbar">
+                    <div>
+                        <h2><i class="fas fa-bell"></i> Alert Centre</h2>
+                        <p>Generated live from stock levels and batch expiry dates</p>
+                    </div>
+                    <div class="toolbar-actions">
+                        <button class="btn-ghost" id="exportAlerts" type="button"><i class="fas fa-file-csv"></i> Export CSV</button>
+                        <a class="btn-brand" href="movements.html"><i class="fas fa-right-left"></i> Open Stock Ledger</a>
+                    </div>
+                </div>
+
+                <section class="kpi-grid">
+                    <article class="kpi-card k-red">
+                        <div class="kpi-top">
+                            <span class="kpi-icon"><i class="fas fa-skull-crossbones"></i></span>
+                            <span class="kpi-trend">critical</span>
+                        </div>
+                        <div class="kpi-value" id="kpiExpired">0</div>
+                        <div class="kpi-label">Expired Batches</div>
+                        <div class="kpi-bar"><span class="kpi-bar-fill" id="kpiExpiredBar"></span></div>
+                        <div class="kpi-foot" id="kpiExpiredFoot">&nbsp;</div>
+                    </article>
+
+                    <article class="kpi-card k-orange">
+                        <div class="kpi-top">
+                            <span class="kpi-icon"><i class="fas fa-hourglass-half"></i></span>
+                            <span class="kpi-trend">30 days</span>
+                        </div>
+                        <div class="kpi-value" id="kpiExpiring">0</div>
+                        <div class="kpi-label">Expiring Soon</div>
+                        <div class="kpi-bar"><span class="kpi-bar-fill" id="kpiExpiringBar"></span></div>
+                        <div class="kpi-foot" id="kpiExpiringFoot">&nbsp;</div>
+                    </article>
+
+                    <article class="kpi-card k-amber">
+                        <div class="kpi-top">
+                            <span class="kpi-icon"><i class="fas fa-arrow-trend-down"></i></span>
+                            <span class="kpi-trend">under 10</span>
+                        </div>
+                        <div class="kpi-value" id="kpiLow">0</div>
+                        <div class="kpi-label">Low Stock Items</div>
+                        <div class="kpi-bar"><span class="kpi-bar-fill" id="kpiLowBar"></span></div>
+                        <div class="kpi-foot" id="kpiLowFoot">&nbsp;</div>
+                    </article>
+
+                    <article class="kpi-card k-indigo">
+                        <div class="kpi-top">
+                            <span class="kpi-icon"><i class="fas fa-bell-concierge"></i></span>
+                            <span class="kpi-trend" id="kpiAlertTrend">clear</span>
+                        </div>
+                        <div class="kpi-value" id="kpiTotal">0</div>
+                        <div class="kpi-label">Total Alerts</div>
+                        <div class="kpi-bar"><span class="kpi-bar-fill" id="kpiTotalBar"></span></div>
+                        <div class="kpi-foot" id="kpiTotalFoot">&nbsp;</div>
+                    </article>
+                </section>
+
+                <div class="filter-row">
+                    <input type="search" class="form-control" id="alertSearch" placeholder="Search medicine name" style="max-width:280px;">
+                    <button class="chip-filter active" data-type="all" type="button">All</button>
+                    <button class="chip-filter" data-type="expired" type="button"><i class="fas fa-skull-crossbones"></i> Expired</button>
+                    <button class="chip-filter" data-type="expiring" type="button"><i class="fas fa-hourglass-half"></i> Expiring</button>
+                    <button class="chip-filter" data-type="low_stock" type="button"><i class="fas fa-arrow-trend-down"></i> Low stock</button>
+                </div>
+
+                <div class="panel">
+                    <header class="panel-head">
+                        <div>
+                            <h3>Active alerts</h3>
+                            <p>Restock directly from an alert without leaving the page</p>
+                        </div>
+                        <span class="panel-chip" id="alertChip">—</span>
+                    </header>
+                    <div class="panel-body" id="alertList"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="app-scrim" id="appScrim"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/alerts.js"></script>
+</body>
+</html>

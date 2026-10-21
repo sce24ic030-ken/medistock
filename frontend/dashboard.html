@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Medistock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="app-body" data-page-title="Dashboard" data-page-sub="Live inventory overview & smart alerts">
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <a class="app-brand" href="dashboard.html">
+                <span class="app-brand-mark"><i class="fas fa-pills"></i></span>
+                <span class="app-brand-text">Medistock<small>Smart Medicine Inventory</small></span>
+            </a>
+
+            <nav class="app-nav" aria-label="Main navigation">
+                <span class="app-nav-label">Overview</span>
+                <a class="app-nav-link active" href="dashboard.html"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+                <a class="app-nav-link" href="medicines.html"><i class="fas fa-capsules"></i><span>Medicines</span></a>
+                <a class="app-nav-link" href="cart.html"><i class="fas fa-shopping-basket"></i><span>Cart</span><span class="app-nav-badge" id="cartCount">0</span></a>
+
+                <span class="app-nav-label">Engagement</span>
+                <a class="app-nav-link" href="feedback.html"><i class="fas fa-comment-medical"></i><span>Feedback</span></a>
+                <a class="app-nav-link" href="faqs.html"><i class="fas fa-question-circle"></i><span>FAQs &amp; Contact</span></a>
+                <a class="app-nav-link" href="reports.html"><i class="fas fa-file-alt"></i><span>Reports</span></a>
+            </nav>
+
+            <div class="app-sidebar-foot">
+                <div class="app-user">
+                    <span class="app-avatar"><i class="fas fa-user"></i></span>
+                    <span class="app-user-meta">
+                        <strong id="userName">User</strong>
+                        <small>Signed in</small>
+                    </span>
+                </div>
+                <a class="app-logout" href="#" onclick="logout()" title="Log out" aria-label="Log out">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main column -->
+        <div class="app-main">
+            <header class="app-topbar">
+                <button class="app-burger" id="appBurger" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="app-topbar-title">
+                    <h1 id="appPageTitle">Dashboard</h1>
+                    <p id="appPageSub">Live inventory overview &amp; smart alerts</p>
+                </div>
+                <div class="app-topbar-actions">
+                    <span class="app-live"><span class="app-live-dot"></span> Live</span>
+                    <span class="app-clock" id="appClock"></span>
+                    <a class="app-icon-btn" href="cart.html" title="Cart"><i class="fas fa-cart-shopping"></i></a>
+                    <a class="app-icon-btn" href="reports.html" title="Reports"><i class="fas fa-chart-line"></i></a>
+                </div>
+            </header>
+
+            <main class="app-content">
+                <div id="apiNotice"></div>
+
+                <!-- Hero -->
+                <section class="dash-hero">
+                    <div class="dash-hero-deco" aria-hidden="true">
+                        <span class="hero-ring r1"></span>
+                        <span class="hero-ring r2"></span>
+                        <span class="hero-ring r3"></span>
+                        <i class="fas fa-pills hero-pill" style="left:8%;bottom:6%;animation-duration:18s;"></i>
+                        <i class="fas fa-capsules hero-pill" style="left:26%;bottom:-4%;animation-duration:24s;animation-delay:4s;"></i>
+                        <i class="fas fa-heart-pulse hero-pill" style="left:62%;bottom:4%;animation-duration:21s;animation-delay:2s;"></i>
+                    </div>
+
+                    <div class="dash-hero-main">
+                        <span class="dash-hero-eyebrow"><span class="app-live-dot"></span> Real-time inventory</span>
+                        <h2 class="dash-hero-title">Welcome back, <span id="heroName">User</span></h2>
+                        <p class="dash-hero-sub" id="heroSub">Tracking every batch, expiry date and stock level across your pharmacy.</p>
+                        <div class="dash-hero-actions">
+                            <a class="btn-soft btn-soft-solid" href="medicines.html"><i class="fas fa-plus"></i> Add Medicine</a>
+                            <a class="btn-soft" href="orders.html"><i class="fas fa-receipt"></i> Orders</a>
+                            <a class="btn-soft" href="movements.html"><i class="fas fa-right-left"></i> Stock Ledger</a>
+                            <a class="btn-soft" href="alerts.html"><i class="fas fa-bell"></i> Alerts</a>
+                            <a class="btn-soft" href="suppliers.html"><i class="fas fa-truck-medical"></i> Suppliers</a>
+                            <a class="btn-soft" href="reports.html"><i class="fas fa-file-alt"></i> Reports</a>
+                        </div>
+                    </div>
+
+                    <div class="dash-hero-stats">
+                        <div class="dash-hero-stat">
+                            <span class="dash-hero-stat-value" id="heroUsers">0</span>
+                            <span class="dash-hero-stat-label">Customers</span>
+                        </div>
+                        <div class="dash-hero-stat">
+                            <span class="dash-hero-stat-value" id="heroOrders">0</span>
+                            <span class="dash-hero-stat-label">Orders</span>
+                        </div>
+                        <div class="dash-hero-stat">
+                            <span class="dash-hero-stat-value" id="heroValue">$0</span>
+                            <span class="dash-hero-stat-label">Stock value</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- KPI cards -->
+                <section class="kpi-grid">
+                    <article class="kpi-card k-indigo">
+                        <div class="kpi-top">
+                            <span class="kpi-icon"><i class="fas fa-capsules"></i></span>
+                            <span class="kpi-trend">catalogue</span>
+                        </div>
+                        <div class="kpi-value" id="totalMedicines">0</div>
+                        <div class="kpi-label">Total Medicines</div>
+                        <div class="kpi-bar"><span class="kpi-bar-fill" id="kpiMedBar"></span></div>
+                        <div class="kpi-foot" id="kpiMedFoot">&nbsp;</div>
+                    </article>
+
+                    <article class="kpi-card k-teal">
+                        <div class="kpi-top">
+                            <span class="kpi-icon"><i class="fas fa-boxes-stacked"></i></span>
+                            <span class="kpi-trend">on hand</span>
+                        </div>
+                        <div class="kpi-value" id="totalStockUnits">0</div>
+                        <div class="kpi-label">Stock Units</div>
+                        <div class="kpi-bar"><span class="kpi-bar-fill" id="kpiUnitsBar"></span></div>
+                        <div class="kpi-foot" id="kpiUnitsFoot">&nbsp;</div>
+                    </article>
+
+                    <article class="kpi-card k-violet">
+                        <div class="kpi-top">
+                            <span class="kpi-icon"><i class="fas fa-sack-dollar"></i></span>
+                            <span class="kpi-trend">inventory</span>
+                        </div>
+                        <div class="kpi-value" id="stockValue">$0</div>
+                        <div class="kpi-label">Inventory Value</div>
+                        <div class="kpi-bar"><span class="kpi-bar-fill" id="kpiValueBar"></span></div>
+                        <div class="kpi-foot" id="kpiValueFoot">&nbsp;</div>
+                    </article>
+
+                    <article class="kpi-card k-orange">
+                        <div class="kpi-top">
+                            <span class="kpi-icon"><i class="fas fa-arrow-trend-down"></i></span>
+                            <span class="kpi-trend" id="kpiLowTrend">clear</span>
+                        </div>
+                        <div class="kpi-value" id="lowStock">0</div>
+                        <div class="kpi-label">Low Stock (&lt;10)</div>
+                        <div class="kpi-bar"><span class="kpi-bar-fill" id="kpiLowBar"></span></div>
+                        <div class="kpi-foot" id="kpiLowFoot">&nbsp;</div>
+                    </article>
+
+                    <article class="kpi-card k-amber">
+                        <div class="kpi-top">
+                            <span class="kpi-icon"><i class="fas fa-hourglass-half"></i></span>
+                            <span class="kpi-trend">30d window</span>
+                        </div>
+                        <div class="kpi-value" id="expiringSoon">0</div>
+                        <div class="kpi-label">Expiring Soon</div>
+                        <div class="kpi-bar"><span class="kpi-bar-fill" id="kpiExpBar"></span></div>
+                        <div class="kpi-foot" id="kpiExpFoot">&nbsp;</div>
+                    </article>
+
+                    <article class="kpi-card k-red">
+                        <div class="kpi-top">
+                            <span class="kpi-icon"><i class="fas fa-skull-crossbones"></i></span>
+                            <span class="kpi-trend" id="kpiExpTrend">clear</span>
+                        </div>
+                        <div class="kpi-value" id="expiredCount">0</div>
+                        <div class="kpi-label">Expired Stock</div>
+                        <div class="kpi-bar"><span class="kpi-bar-fill" id="kpiDeadBar"></span></div>
+                        <div class="kpi-foot" id="kpiDeadFoot">&nbsp;</div>
+                    </article>
+                </section>
+
+                <!-- Charts -->
+                <section class="dash-grid">
+                    <article class="panel panel-span-5">
+                        <header class="panel-head">
+                            <div>
+                                <h3>Category Distribution</h3>
+                                <p>Stock units held in each category</p>
+                            </div>
+                            <span class="panel-chip" id="categoryChip">—</span>
+                        </header>
+                        <div class="panel-body">
+                            <div class="chart-wrap">
+                                <canvas id="categoryChart"></canvas>
+                                <div class="chart-center" id="categoryCenter">
+                                    <strong id="categoryTotal">0</strong>
+                                    <span>Medicines</span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="panel panel-span-7">
+                        <header class="panel-head">
+                            <div>
+                                <h3>Expiry Timeline</h3>
+                                <p>Batches reaching expiry over the next 90 days</p>
+                            </div>
+                            <span class="panel-chip" id="expiryChip">—</span>
+                        </header>
+                        <div class="panel-body">
+                            <div class="chart-wrap chart-tall">
+                                <canvas id="expiryChart"></canvas>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- Health, alerts, activity -->
+                <section class="dash-grid">
+                    <article class="panel panel-span-4">
+                        <header class="panel-head">
+                            <div>
+                                <h3>Stock Health</h3>
+                                <p>How the catalogue is holding up</p>
+                            </div>
+                        </header>
+                        <div class="panel-body">
+                            <div class="health-figure">
+                                <span id="healthPct">0%</span>
+                                <small>healthy stock</small>
+                            </div>
+                            <div class="health-bar">
+                                <span class="health-seg s-healthy" id="segHealthy"></span>
+                                <span class="health-seg s-low" id="segLow"></span>
+                                <span class="health-seg s-expiring" id="segExpiring"></span>
+                                <span class="health-seg s-expired" id="segExpired"></span>
+                            </div>
+                            <ul class="health-legend">
+                                <li><i class="s-healthy" style="background:#00b894"></i> Healthy <strong id="legendHealthy">0</strong></li>
+                                <li><i style="background:#f39c12"></i> Low stock <strong id="legendLow">0</strong></li>
+                                <li><i style="background:#ef7d28"></i> Expiring <strong id="legendExpiring">0</strong></li>
+                                <li><i style="background:#e74c3c"></i> Expired <strong id="legendExpired">0</strong></li>
+                            </ul>
+                            <p style="font-size:0.72rem;color:#9aa0b4;margin:12px 0 0;">
+                                A medicine can trigger more than one alert, so these totals can overlap.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="panel panel-span-4">
+                        <header class="panel-head">
+                            <div>
+                                <h3>Smart Alerts</h3>
+                                <p>Items that need attention right now</p>
+                            </div>
+                            <span class="panel-chip chip-danger" id="alertChip">0</span>
+                        </header>
+                        <div class="panel-body panel-scroll" id="alertsPanel">
+                            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Loading alerts...</div>
+                        </div>
+                    </article>
+
+                    <article class="panel panel-span-4">
+                        <header class="panel-head">
+                            <div>
+                                <h3>Recent Activity</h3>
+                                <p>Latest events recorded in the system</p>
+                            </div>
+                        </header>
+                        <div class="panel-body panel-scroll" id="activitiesList">
+                            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Loading activity...</div>
+                        </div>
+                    </article>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <div class="app-scrim" id="appScrim"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

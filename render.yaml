@@ -1,0 +1,47 @@
+# Medistock - Render deployment blueprint
+#
+# Create the services with:  New > Blueprint > point Render at this repository
+# and select render.yaml. Fill in the Aiven MySQL values as Render secrets
+# (they are read from the dashboard, never committed).
+
+services:
+  - type: web
+    name: medistock-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.4
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 25060
+      - key: DB_USER
+        value: avnadmin
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: defaultdb
+      - key: FRONTEND_URL
+        sync: false
+      - key: EXTRA_ORIGINS
+        sync: false
+
+  - type: web
+    name: medistock-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: ""
+    staticPublishPath: ./
+    autoDeploy: true
+    headers:
+      - key: X-Frame-Options
+        value: SAMEORIGIN

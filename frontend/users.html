@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users &amp; Roles | Medistock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-body" data-page-title="Users &amp; Roles" data-page-sub="Manage accounts, access levels and permissions">
+    <div class="app-shell">
+        <aside class="app-sidebar" id="appSidebar"></aside>
+
+        <div class="app-main">
+            <header class="app-topbar">
+                <button class="app-burger" id="appBurger" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="app-topbar-title">
+                    <h1 id="appPageTitle">Users &amp; Roles</h1>
+                    <p id="appPageSub">Manage accounts, access levels and permissions</p>
+                </div>
+                <div class="app-topbar-actions">
+                    <span class="app-live"><span class="app-live-dot"></span> Live</span>
+                    <span class="app-clock" id="appClock"></span>
+                    <a class="app-icon-btn" href="cart.html" title="Cart"><i class="fas fa-cart-shopping"></i></a>
+                    <a class="app-icon-btn" href="reports.html" title="Reports"><i class="fas fa-chart-line"></i></a>
+                </div>
+            </header>
+
+            <main class="app-content">
+                <div class="page-toolbar">
+                    <div>
+                        <h2><i class="fas fa-users-cog"></i> Access Control</h2>
+                        <p>Administrators, pharmacists and customers — with one click role changes</p>
+                    </div>
+                    <div class="toolbar-actions">
+                        <button class="btn-ghost" id="exportUsers" type="button"><i class="fas fa-file-csv"></i> Export CSV</button>
+                        <button class="btn-brand" id="addUserBtn" type="button"><i class="fas fa-user-plus"></i> Add User</button>
+                    </div>
+                </div>
+
+                <section class="kpi-grid">
+                    <article class="kpi-card k-indigo">
+                        <div class="kpi-top">
+                            <span class="kpi-icon"><i class="fas fa-users"></i></span>
+                            <span class="kpi-trend">accounts</span>
+                        </div>
+                        <div class="kpi-value" id="kpiUsers">0</div>
+                        <div class="kpi-label">Total Users</div>
+                        <div class="kpi-bar"><span class="kpi-bar-fill" id="kpiUsersBar"></span></div>
+                        <div class="kpi-foot" id="kpiUsersFoot">&nbsp;</div>
+                    </article>
+
+                    <article class="kpi-card k-red">
+                        <div class="kpi-top">
+                            <span class="kpi-icon"><i class="fas fa-user-shield"></i></span>
+                            <span class="kpi-trend">full access</span>
+                        </div>
+                        <div class="kpi-value" id="kpiAdmins">0</div>
+                        <div class="kpi-label">Administrators</div>
+                        <div class="kpi-bar"><span class="kpi-bar-fill" id="kpiAdminsBar"></span></div>
+                        <div class="kpi-foot" id="kpiAdminsFoot">&nbsp;</div>
+                    </article>
+
+                    <article class="kpi-card k-teal">
+                        <div class="kpi-top">
+                            <span class="kpi-icon"><i class="fas fa-user-nurse"></i></span>
+                            <span class="kpi-trend">staff</span>
+                        </div>
+                        <div class="kpi-value" id="kpiPharmacists">0</div>
+                        <div class="kpi-label">Pharmacists</div>
+                        <div class="kpi-bar"><span class="kpi-bar-fill" id="kpiPharmacistsBar"></span></div>
+                        <div class="kpi-foot" id="kpiPharmacistsFoot">&nbsp;</div>
+                    </article>
+
+                    <article class="kpi-card k-violet">
+                        <div class="kpi-top">
+                            <span class="kpi-icon"><i class="fas fa-user-group"></i></span>
+                            <span class="kpi-trend" id="kpiInactiveTrend">active</span>
+                        </div>
+                        <div class="kpi-value" id="kpiCustomers">0</div>
+                        <div class="kpi-label">Customers</div>
+                        <div class="kpi-bar"><span class="kpi-bar-fill" id="kpiCustomersBar"></span></div>
+                        <div class="kpi-foot" id="kpiCustomersFoot">&nbsp;</div>
+                    </article>
+                </section>
+
+                <div class="filter-row">
+                    <input type="search" class="form-control" id="userSearch" placeholder="Search name or email" style="max-width:300px;">
+                </div>
+
+                <div class="data-card">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Orders</th>
+                                    <th>Spend</th>
+                                    <th>Last login</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTable">
+                                <tr><td colspan="6" class="text-center text-muted py-4">Loading users...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="app-scrim" id="appScrim"></div>
+
+    <div class="modal fade" id="userModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, var(--brand-indigo), #7a4bf0); color:#fff;">
+                    <h5 class="modal-title"><i class="fas fa-user-plus"></i> Add a user account</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="userForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Full name *</label>
+                                <input type="text" class="form-control" id="newUserName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="newUserEmail" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Password *</label>
+                                <input type="text" class="form-control" id="newUserPassword" placeholder="At least 6 characters" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Role *</label>
+                                <select class="form-select" id="newUserRole">
+                                    <option value="customer">Customer</option>
+                                    <option value="pharmacist">Pharmacist</option>
+                                    <option value="admin">Administrator</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Phone</label>
+                                <input type="text" class="form-control" id="newUserPhone">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-ghost" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn-brand" id="saveUserBtn"><i class="fas fa-check"></i> Create account</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/users.js"></script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | Medistock</title>
+    <meta name="description" content="Create your Medistock account to track medicine stock, batches and expiry alerts.">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+    <div class="auth-split">
+        <!-- Brand panel -->
+        <aside class="auth-brand">
+            <div class="auth-deco" aria-hidden="true">
+                <span class="auth-blob b1"></span>
+                <span class="auth-blob b2"></span>
+                <span class="auth-blob b3"></span>
+            </div>
+
+            <a class="auth-logo" href="index.html">
+                <span class="auth-logo-mark"><i class="fas fa-pills"></i></span>
+                <span class="auth-logo-text">Medistock<span>Inventory</span></span>
+            </a>
+
+            <div>
+                <h1 class="auth-brand-headline">Start managing your stock in minutes.</h1>
+                <p class="auth-brand-sub">
+                    Create a free account and get a live view of every batch,
+                    quantity and expiry date in your store.
+                </p>
+                <ul class="auth-features">
+                    <li><i class="fas fa-check"></i> Free account in a few seconds</li>
+                    <li><i class="fas fa-check"></i> Track every batch and expiry date</li>
+                    <li><i class="fas fa-check"></i> Export reports whenever you need</li>
+                </ul>
+            </div>
+
+            <div class="auth-stats">
+                <div><strong>500+</strong><span>Medicine records</span></div>
+                <div><strong>24/7</strong><span>Expiry monitoring</span></div>
+                <div><strong>100%</strong><span>Actions logged</span></div>
+            </div>
+        </aside>
+
+        <!-- Form panel -->
+        <main class="auth-form-side">
+            <div class="auth-form-wrap">
+                <div class="auth-form-head">
+                    <h2>Create your account</h2>
+                    <p>It's free and takes less than a minute.</p>
+                </div>
+
+                <div id="alertBox" role="alert" aria-live="polite"></div>
+
+                <form id="signupForm" data-auth-form>
+                    <div class="auth-field">
+                        <label for="name">Full name</label>
+                        <div class="auth-control">
+                            <i class="fas fa-user"></i>
+                            <input type="text" class="form-control" id="name" name="name"
+                                   placeholder="Enter your full name" autocomplete="name" required>
+                        </div>
+                    </div>
+
+                    <div class="auth-field">
+                        <label for="email">Email address</label>
+                        <div class="auth-control">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" class="form-control" id="email" name="email"
+                                   placeholder="you@example.com" autocomplete="email" required>
+                        </div>
+                    </div>
+
+                    <div class="auth-field">
+                        <label for="password">Password</label>
+                        <div class="auth-control">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" class="form-control" id="password" name="password"
+                                   placeholder="Minimum 6 characters" autocomplete="new-password"
+                                   minlength="6" required>
+                            <button type="button" class="auth-toggle" data-toggle-password="password"
+                                    aria-label="Show password"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="auth-row">
+                        <span class="auth-check" style="cursor: default;">
+                            <i class="fas fa-shield-alt" style="color: var(--brand-indigo);"></i> Passwords are securely hashed
+                        </span>
+                    </div>
+
+                    <button type="submit" class="auth-submit" data-loading-text="Creating account...">
+                        <i class="fas fa-user-plus btn-icon"></i>
+                        <span class="spinner spinner-border spinner-border-sm" aria-hidden="true"></span>
+                        <span class="btn-label">Create Account</span>
+                    </button>
+                </form>
+
+                <p class="auth-alt">
+                    Already have an account? <a href="index.html" class="auth-link">Login</a>
+                </p>
+
+                <div class="auth-foot">
+                    <a href="faqs.html">FAQs</a>
+                    <a href="index.html"><i class="fas fa-arrow-left"></i> Back to login</a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth-ui.js"></script>
+    <script>
+        const signupForm = document.getElementById('signupForm');
+        const alertBox = document.getElementById('alertBox');
+
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!name || !email || !password) {
+                AuthUI.setLoading(signupForm, false);
+                AuthUI.showMessage(alertBox, 'Please fill in every field.', 'danger');
+                return;
+            }
+
+            try {
+                const result = await apiCall('/api/auth/signup', 'POST', { name, email, password });
+                AuthUI.showMessage(alertBox, result.message + '! Redirecting to login...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            } catch (error) {
+                AuthUI.setLoading(signupForm, false);
+                AuthUI.showMessage(alertBox, error.message, 'danger');
+            }
+        });
+    </script>
+</body>
+</html>
