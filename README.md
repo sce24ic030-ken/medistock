@@ -106,12 +106,30 @@ Smart-Medicine-Inventory/
 2. Update `js/config.js` with your backend URL (e.g. `http://127.0.0.1:5000` for local)
 3. Open `index.html` in a browser, or serve the folder statically
 
-### Deployment (Render)
-1. **Backend (Web Service)** — push the repo to GitHub, create a Render Web Service with the
-   `backend/` root, and add the Aiven environment variables (`DB_HOST`, `DB_PORT`, `DB_USER`,
-   `DB_PASSWORD`, `DB_NAME`, plus `SECRET_KEY`).
-2. **Frontend (Static Site)** — create a Render Static Site with the `frontend/` root, then
-   point `js/config.js` `API_BASE_URL` at the deployed backend URL.
+### Deployment (Render) — live
+
+| Service | URL |
+|---|---|
+| Frontend (Static Site) | **https://medistock-web.onrender.com** |
+| Backend API (Flask) | **https://medistock-api-zudg.onrender.com** |
+| Health check | https://medistock-api-zudg.onrender.com/api/health |
+
+The repository also contains a `render.yaml` blueprint, so the same two services can be
+recreated from the Render dashboard in one click:
+
+1. **Backend (Web Service)** — `backend/` root, build `pip install -r requirements.txt`,
+   start `gunicorn app:app`, health check `/api/health`, pre-deploy `python seed.py`
+   (seeds the demo database on every deploy).
+   Environment variables: `SECRET_KEY`, `JWT_SECRET_KEY`, `FRONTEND_URL`,
+   `EXTRA_ORIGINS` and — for Aiven MySQL — `DB_HOST`, `DB_PORT`, `DB_USER`,
+   `DB_PASSWORD`, `DB_NAME`.
+2. **Frontend (Static Site)** — `frontend/` root, publish path `./`.
+   `js/config.js` automatically targets the live API for any non-local hostname;
+   a local copy keeps using `http://127.0.0.1:5000`.
+
+> The live instance currently stores its data in SQLite (the Render filesystem).
+> Adding the Aiven MySQL environment variables above switches the backend to
+> MySQL on the next deploy — no code change needed.
 
 ---
 
