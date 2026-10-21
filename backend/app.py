@@ -1,3 +1,4 @@
+import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from config import Config
@@ -188,6 +189,15 @@ with app.app_context():
     ensure_columns()
     ensure_medicine_fk_nullable()
     print("Database tables created successfully!")
+
+    # On a fresh deployment the demo database is empty. Render's free plan
+    # does not run pre-deploy commands, so the app seeds itself here instead.
+    if os.environ.get('AUTO_SEED', '').lower() in ('1', 'true', 'yes'):
+        try:
+            from seed_data import seed_all
+            seed_all()
+        except Exception as exc:  # never block the boot because of demo data
+            print(f"Auto-seed skipped: {exc}")
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
