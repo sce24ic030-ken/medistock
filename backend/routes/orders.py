@@ -4,15 +4,19 @@ from models.order import Order, OrderItem
 from models.medicine import Medicine
 from models.user import User
 from models.activity import Activity
-from utils.decorators import login_required, admin_required
+from utils.decorators import login_required, admin_required, counter_required, current_role
 
 orders_bp = Blueprint('orders', __name__)
 
 ORDER_STATUSES = ('pending', 'packed', 'completed', 'cancelled')
 
+# Roles that work the counter and therefore see the full order register.
+COUNTER_ROLES = ('admin', 'pharmacist', 'staff')
 
-def _is_admin():
-    return session.get('role') == 'admin'
+
+def _is_counter():
+    """Counter staff (admin, pharmacist, staff) see every order."""
+    return current_role() in COUNTER_ROLES
 
 
 @orders_bp.route('/', methods=['GET'])
@@ -21,7 +25,7 @@ def list_orders():
     try:
         query = Order.query
 
-        if not _is_admin():
+        if not _is_counter():
             query = query.filter_by(user_id=session.get('user_id'))
 
         status = (request.args.get('status') or '').strip().lower()
@@ -40,7 +44,7 @@ def list_orders():
         orders = query.order_by(Order.created_at.desc()).all()
 
         # summary for the page header cards
-        base = Order.query if _is_admin() else Order.query.filter_by(user_id=session.get('user_id'))
+        base = Order.query if _is_counter() else Order.query.filter_by(user_id=session.get('user_id'))
         all_orders = base.all()
         count = len(all_orders)
         revenue = sum(o.total_amount for o in all_orders)
@@ -71,7 +75,7 @@ def get_order(order_id):
         order = Order.query.get(order_id)
         if not order:
             return jsonify({'error': 'Order not found'}), 404
-        if not _is_admin() and order.user_id != session.get('user_id'):
+        if not _is_counter() and order.user_id != session.get('user_id'):
             return jsonify({'error': 'Access denied'}), 403
         return jsonify({'order': order.to_dict()}), 200
     except Exception as e:
@@ -79,7 +83,7 @@ def get_order(order_id):
 
 
 @orders_bp.route('/', methods=['POST'])
-@admin_required
+@counter_required
 def create_order():
     """Record a walk-in / manual sale straight from the Orders tab."""
     try:
@@ -129,7 +133,7 @@ def create_order():
 
 
 @orders_bp.route('/<int:order_id>', methods=['PATCH'])
-@admin_required
+@counter_required
 def update_order_status(order_id):
     try:
         data = request.get_json() or {}

@@ -3,7 +3,7 @@ from models import db
 from models.medicine import Medicine
 from models.activity import Activity
 from models.order import Order
-from utils.decorators import login_required, admin_required
+from utils.decorators import login_required, admin_required, role_required, ADMIN, PHARMACIST
 from datetime import date
 import csv
 import io
@@ -11,7 +11,7 @@ import io
 reports_bp = Blueprint('reports', __name__)
 
 @reports_bp.route('/stock', methods=['GET'])
-@login_required
+@role_required(ADMIN, PHARMACIST)
 def stock_report():
     try:
         medicines = Medicine.query.order_by(Medicine.name).all()
@@ -47,7 +47,7 @@ def stock_report():
         return jsonify({'error': str(e)}), 500
 
 @reports_bp.route('/activity', methods=['GET'])
-@login_required
+@role_required(ADMIN, PHARMACIST)
 def activity_report():
     try:
         activities = Activity.query.order_by(Activity.created_at.desc()).limit(100).all()
@@ -56,7 +56,7 @@ def activity_report():
         return jsonify({'error': str(e)}), 500
 
 @reports_bp.route('/low-stock', methods=['GET'])
-@login_required
+@role_required(ADMIN, PHARMACIST)
 def low_stock_report():
     try:
         medicines = Medicine.query.filter(Medicine.quantity < 10).order_by(Medicine.quantity).all()
@@ -65,7 +65,7 @@ def low_stock_report():
         return jsonify({'error': str(e)}), 500
 
 @reports_bp.route('/expiring', methods=['GET'])
-@login_required
+@role_required(ADMIN, PHARMACIST)
 def expiring_report():
     try:
         today = date.today()
@@ -82,7 +82,7 @@ def expiring_report():
         return jsonify({'error': str(e)}), 500
 
 @reports_bp.route('/expired', methods=['GET'])
-@login_required
+@role_required(ADMIN, PHARMACIST)
 def expired_report():
     try:
         today = date.today()

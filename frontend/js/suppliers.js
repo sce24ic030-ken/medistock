@@ -185,7 +185,8 @@ function exportSuppliers() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    App.init().then(function () {
+    App.init({ roles: ['admin', 'pharmacist', 'staff'] }).then(function (user) {
+        if (!user) return;
         loadSuppliers();
 
         const addBtn = document.getElementById('addSupplierBtn');

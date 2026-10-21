@@ -3,10 +3,15 @@ from models import db
 from models.medicine import Medicine
 from models.cart import Cart
 from models.activity import Activity
-from utils.decorators import login_required, admin_required
+from utils.decorators import login_required, admin_required, role_required, ADMIN, PHARMACIST
 from datetime import datetime, date
 
 medicines_bp = Blueprint('medicines', __name__)
+
+# Roles allowed to maintain the catalogue. Counter staff have read-only
+# access to the catalogue; they change stock through the ledger instead.
+CATALOGUE_ROLES = (ADMIN, PHARMACIST)
+
 
 def log_activity(user_id, action, details=None):
     try:
@@ -17,10 +22,13 @@ def log_activity(user_id, action, details=None):
         db.session.rollback()
 
 @medicines_bp.route('/', methods=['GET'])
+@login_required
 def get_all_medicines():
     try:
         search = request.args.get('search', '')
         category = request.args.get('category', '')
+        # The shop view only shows what a customer may actually buy.
+        available_only = request.args.get('available_only', '').lower() in ('1', 'true', 'yes')
         
         query = Medicine.query
         
@@ -29,10 +37,13 @@ def get_all_medicines():
         if category:
             query = query.filter_by(category=category)
         
+        today = date.today()
+        if available_only:
+            query = query.filter(Medicine.quantity > 0, Medicine.expiry_date >= today)
+        
         medicines = query.order_by(Medicine.name).all()
         
         result = []
-        today = date.today()
         for med in medicines:
             med_dict = med.to_dict()
             days_to_expire = (med.expiry_date - today).days
@@ -48,6 +59,7 @@ def get_all_medicines():
             else:
                 med_dict['alert'] = 'normal'
                 med_dict['alert_text'] = 'OK'
+            med_dict['available'] = med.quantity > 0 and med.expiry_date >= today
             result.append(med_dict)
         
         return jsonify({'medicines': result}), 200
@@ -55,6 +67,7 @@ def get_all_medicines():
         return jsonify({'error': str(e)}), 500
 
 @medicines_bp.route('/<int:med_id>', methods=['GET'])
+@login_required
 def get_medicine(med_id):
     try:
         med = Medicine.query.get(med_id)
@@ -65,7 +78,7 @@ def get_medicine(med_id):
         return jsonify({'error': str(e)}), 500
 
 @medicines_bp.route('/', methods=['POST'])
-@admin_required
+@role_required(ADMIN, PHARMACIST)
 def add_medicine():
     try:
         data = request.get_json() or {}
@@ -102,7 +115,7 @@ def add_medicine():
         return jsonify({'error': str(e)}), 500
 
 @medicines_bp.route('/<int:med_id>', methods=['PUT'])
-@admin_required
+@role_required(ADMIN, PHARMACIST)
 def update_medicine(med_id):
     try:
         medicine = Medicine.query.get(med_id)
@@ -162,6 +175,7 @@ def delete_medicine(med_id):
         return jsonify({'error': str(e)}), 500
 
 @medicines_bp.route('/categories', methods=['GET'])
+@login_required
 def get_categories():
     try:
         categories = db.session.query(Medicine.category).distinct().filter(Medicine.category != '').all()

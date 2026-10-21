@@ -39,6 +39,20 @@ class Config:
 
     # Extra origins allowed to call the API (comma separated).
     EXTRA_ORIGINS = [o.strip() for o in (os.environ.get('EXTRA_ORIGINS') or '').split(',') if o.strip()]
+
+    # Session cookie flags.
+    # "onrender.com" is a public suffix, so https://medistock-web.onrender.com
+    # and https://medistock-api-zudg.onrender.com are *different sites*. A
+    # cookie without an explicit SameSite attribute is treated as Lax and
+    # browsers then refuse to store it on such a cross-site response. When the
+    # frontend is hosted separately the cookie therefore has to be sent as
+    # "SameSite=None; Secure". (Local development stays on plain Lax because
+    # both halves run on 127.0.0.1.)
+    SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE') or 'Lax'
+    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
+    if str(SESSION_COOKIE_SAMESITE).lower() == 'none':
+        # SameSite=None is only honoured together with the Secure flag.
+        SESSION_COOKIE_SECURE = True
     
     # Email settings
     MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'

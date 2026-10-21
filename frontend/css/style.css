@@ -338,6 +338,7 @@ body {
 .auth-page {
     background: var(--white);
     min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .auth-split {
@@ -357,6 +358,7 @@ body {
     flex-direction: column;
     justify-content: space-between;
     gap: 2.5rem;
+    min-height: 0;
     background: linear-gradient(150deg, #2b2a72 0%, #3f3fc4 35%, #4d57e9 66%, #7a4bf0 100%);
 }
 
@@ -535,11 +537,16 @@ body {
     justify-content: center;
     padding: 3rem 1.5rem;
     background: var(--white);
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .auth-form-wrap {
     width: 100%;
     max-width: 400px;
+    /* auto margins keep the form centred without clipping it when the
+       viewport is too short for the whole form */
+    margin: auto;
 }
 
 .auth-back {
@@ -778,13 +785,20 @@ body {
     z-index: 2;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     gap: 1.75rem;
-    min-height: 100%;
+    min-height: 0;
+    height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+/* The stats stick to the bottom when there is room for them.
+   (auto margin instead of justify-content: space-between, because
+   space-between clips the top of an overflowing flex column) */
+.auth-brand-scroll > .auth-stats {
+    margin-top: auto;
 }
 
 .auth-brand-scroll::-webkit-scrollbar {
@@ -995,10 +1009,88 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
+/* ---------- The login page always fills the window ----------
+   On a wide screen the split is exactly one window high and each half
+   scrolls inside itself, so the page never grows a second screen full of
+   content below the fold. */
+@media (min-width: 992px) {
+    .auth-split {
+        height: 100vh;
+        height: 100dvh;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .auth-brand,
+    .auth-form-side {
+        height: 100%;
+        min-height: 0;
+    }
+}
+
+/* Short windows: shrink the brand panel so it still fits without scrolling. */
+@media (min-width: 992px) and (max-height: 860px) {
+    .auth-brand {
+        padding: 2rem 2.5rem;
+    }
+
+    .auth-brand-headline {
+        font-size: 1.95rem;
+    }
+
+    .auth-brand-sub {
+        font-size: 0.92rem;
+        margin-top: 0.7rem;
+    }
+
+    .auth-feature-grid {
+        gap: 0.45rem;
+        margin-top: 1.1rem;
+    }
+
+    .auth-chip {
+        padding: 0.45rem 0.6rem;
+        font-size: 0.74rem;
+    }
+
+    .auth-chip i {
+        width: 22px;
+        height: 22px;
+        font-size: 0.62rem;
+    }
+
+    .auth-stats {
+        padding-top: 1.1rem;
+        gap: 1.75rem;
+    }
+
+    .auth-stats strong {
+        font-size: 1.25rem;
+    }
+}
+
+/* Very short windows: drop the optional brand extras. */
+@media (min-width: 992px) and (max-height: 640px) {
+    .auth-feature-grid,
+    .auth-stats {
+        display: none;
+    }
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 991.98px) {
     .auth-split {
         grid-template-columns: 1fr;
+    }
+
+    /* On small screens the page scrolls normally instead of scrolling
+       inside the two panels. */
+    .auth-brand {
+        overflow: visible;
+    }
+
+    .auth-brand-scroll {
+        height: auto;
     }
 
     .auth-brand {
@@ -1023,6 +1115,7 @@ body {
 
     .auth-form-side {
         padding: 2.5rem 1.25rem 3rem;
+        overflow: visible;
     }
 }
 
@@ -2811,4 +2904,420 @@ body {
     .toolbar-actions { width: 100%; }
     .supplier-stats { grid-template-columns: 1fr 1fr; }
     .alert-center-item { flex-wrap: wrap; }
+}
+
+/* ==========================================================================
+   Role workspaces — one visual language per role
+   (pharmacist.html / staff.html / customer.html / shop.html)
+   ========================================================================== */
+
+/* The nav renders one wrapper per group so empty groups can be hidden. */
+.app-nav-group {
+    display: block;
+}
+
+/* Role chip in the top bar. */
+.role-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0.35rem 0.8rem;
+    border-radius: 30px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--brand-deep);
+    background: var(--brand-soft);
+    border: 1px solid rgba(77, 87, 233, 0.18);
+}
+
+.role-chip i {
+    font-size: 0.8rem;
+}
+
+/* --- Role heroes ------------------------------------------------------- */
+
+.role-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    padding: 26px 30px;
+    margin-bottom: 20px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    flex-wrap: wrap;
+    box-shadow: 0 18px 40px rgba(43, 42, 114, 0.22);
+}
+
+.role-hero--admin {
+    background: linear-gradient(115deg, #2b2a72 0%, #3f3fc4 42%, #4d57e9 72%, #7a4bf0 100%);
+    background-size: 220% 220%;
+    animation: authGradient 22s ease-in-out infinite;
+}
+
+.role-hero--pharmacist {
+    background: linear-gradient(115deg, #0b6b63 0%, #00a894 38%, #00cec9 72%, #55efc4 100%);
+    background-size: 220% 220%;
+    animation: authGradient 24s ease-in-out infinite;
+    box-shadow: 0 18px 40px rgba(0, 168, 148, 0.28);
+}
+
+.role-hero--staff {
+    background: linear-gradient(115deg, #8a3d00 0%, #d35400 38%, #e17055 72%, #fdcb6e 100%);
+    background-size: 220% 220%;
+    animation: authGradient 24s ease-in-out infinite;
+    box-shadow: 0 18px 40px rgba(211, 84, 0, 0.26);
+}
+
+.role-hero--customer {
+    background: linear-gradient(115deg, #1b3b8f 0%, #2d6cdf 38%, #4d9fff 72%, #81ecec 100%);
+    background-size: 220% 220%;
+    animation: authGradient 24s ease-in-out infinite;
+    box-shadow: 0 18px 40px rgba(29, 78, 216, 0.26);
+}
+
+.role-hero__main {
+    position: relative;
+    z-index: 2;
+    flex: 1 1 340px;
+    min-width: 0;
+}
+
+.role-hero__title {
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    margin: 0 0 6px;
+    line-height: 1.15;
+}
+
+.role-hero__sub {
+    margin: 0 0 16px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.92rem;
+    max-width: 540px;
+}
+
+.role-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.role-hero__side {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 220px;
+}
+
+.role-hero__fact {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(6px);
+}
+
+.role-hero__fact i {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 0.95rem;
+}
+
+.role-hero__fact span {
+    display: block;
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.72);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+}
+
+.role-hero__fact strong {
+    font-size: 1.05rem;
+    letter-spacing: -0.2px;
+}
+
+/* --- Counter queue (staff) --------------------------------------------- */
+
+.queue-list {
+    display: grid;
+    gap: 12px;
+}
+
+.queue-card {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(31, 35, 64, 0.08);
+    background: #fff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.queue-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(31, 35, 64, 0.09);
+    border-color: rgba(77, 87, 233, 0.25);
+}
+
+.queue-card__id {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand-soft);
+    color: var(--brand-deep);
+    font-weight: 800;
+    font-size: 0.85rem;
+    line-height: 1.1;
+}
+
+.queue-card__id small {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    opacity: 0.6;
+}
+
+.queue-card__body strong {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--brand-ink);
+}
+
+.queue-card__body small {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--brand-muted);
+    margin-top: 2px;
+}
+
+.queue-card__items {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.queue-card__items span {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 8px;
+    background: #f3f4fb;
+    color: #4b5563;
+}
+
+.queue-card__side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.queue-card__total {
+    font-weight: 800;
+    color: var(--brand-ink);
+    font-size: 1.05rem;
+}
+
+/* --- Shop grid (customer) ---------------------------------------------- */
+
+.shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 16px;
+}
+
+.shop-card {
+    background: #fff;
+    border-radius: 18px;
+    border: 1px solid rgba(31, 35, 64, 0.07);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 8px 22px rgba(31, 35, 64, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.shop-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 32px rgba(31, 35, 64, 0.1);
+}
+
+.shop-card__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.shop-card__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #eef0ff, #e2e6ff);
+    color: var(--brand-deep);
+    font-size: 1.05rem;
+}
+
+.shop-card h4 {
+    font-size: 0.95rem;
+    color: var(--brand-ink);
+    line-height: 1.3;
+}
+
+.shop-card p {
+    font-size: 0.78rem;
+    color: var(--brand-muted);
+}
+
+.shop-card__price {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--brand-ink);
+    letter-spacing: -0.3px;
+}
+
+.shop-card__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.74rem;
+    color: var(--brand-muted);
+}
+
+.shop-card__actions {
+    margin-top: auto;
+    display: flex;
+    gap: 8px;
+}
+
+.shop-card__actions .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+}
+
+/* --- Order tracker (customer) ------------------------------------------ */
+
+.order-track {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.order-track span {
+    font-size: 0.7rem;
+    text-align: center;
+    padding: 6px 4px;
+    border-radius: 9px;
+    background: #f1f2f8;
+    color: #98a0b4;
+    font-weight: 600;
+}
+
+.order-track span.done {
+    background: rgba(0, 184, 148, 0.14);
+    color: #0f9d76;
+}
+
+.order-track span.current {
+    background: var(--brand-indigo);
+    color: #fff;
+}
+
+/* --- Generic role helpers ---------------------------------------------- */
+
+.role-note {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--brand-soft);
+    color: var(--brand-deep);
+    font-size: 0.84rem;
+    margin-bottom: 18px;
+}
+
+.role-note i {
+    font-size: 1rem;
+    margin-top: 2px;
+}
+
+.stack-list {
+    display: grid;
+    gap: 10px;
+}
+
+.stack-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 13px;
+    border: 1px solid rgba(31, 35, 64, 0.07);
+    background: #fff;
+}
+
+.stack-row__body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.stack-row__body strong {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--brand-ink);
+}
+
+.stack-row__body small {
+    color: var(--brand-muted);
+    font-size: 0.76rem;
+}
+
+.stack-row__value {
+    font-weight: 700;
+    color: var(--brand-ink);
+    white-space: nowrap;
+}
+
+.stack-row__icon {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    border-radius: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f2f8;
+    color: var(--brand-deep);
+}
+
+@media (max-width: 768px) {
+    .queue-card { grid-template-columns: 1fr; }
+    .queue-card__side { align-items: flex-start; }
+    .order-track { grid-template-columns: repeat(2, 1fr); }
 }

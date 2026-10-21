@@ -1,20 +1,13 @@
 let selectedRating = 0;
 
 async function init() {
-    try {
-        const user = await apiCall('/api/auth/me', 'GET');
-        if (!user.user) {
-            window.location.href = 'index.html';
-            return;
-        }
-        document.getElementById('userName').textContent = user.user.name;
-        document.getElementById('fbName').value = user.user.name;
-        document.getElementById('fbEmail').value = user.user.email;
-        loadFeedback();
-        setupStars();
-    } catch (error) {
-        window.location.href = 'index.html';
-    }
+    const user = await App.init();
+    if (!user) return;
+
+    document.getElementById('fbName').value = user.name;
+    document.getElementById('fbEmail').value = user.email;
+    loadFeedback();
+    setupStars();
 }
 
 function setupStars() {

@@ -1,5 +1,5 @@
 /* Medistock - shared helpers for every signed-in page (toasts, formatting,
-   session bootstrap, cart badge). */
+   session bootstrap, cart badge, role based visibility). */
 const App = {
     user: null,
 
@@ -81,31 +81,46 @@ const App = {
 
         const roleEl = document.getElementById('userRole');
         if (roleEl) {
-            const labels = { admin: 'Administrator', pharmacist: 'Pharmacist', customer: 'Customer' };
-            roleEl.textContent = labels[user.role] || user.role;
+            roleEl.textContent = user.role_label || labelForRole(user.role);
         }
     },
 
-    /* Hides the admin-only navigation and buttons for every other role. */
+    /* Home page of the signed-in role (dashboard / workspace / counter / shop). */
+    home: function (role) {
+        return homeForRole(role || (App.user && App.user.role));
+    },
+
+    /* Hides everything the signed-in role may not use.
+
+       Any element with data-roles="admin,pharmacist" stays visible for those
+       roles only; the old data-admin-only attribute keeps working as well. */
     applyRole: function (role) {
-        if (role === 'admin') return;
+        if (!role) return;
 
         document.querySelectorAll('[data-admin-only]').forEach(function (el) {
             el.style.display = 'none';
         });
+
+        if (window.MEDISTOCK && window.MEDISTOCK.applyRoleVisibility) {
+            window.MEDISTOCK.applyRoleVisibility(role);
+        }
     },
 
-    /* Loads the signed-in user, fills the sidebar and hides admin-only UI. */
+    /* Loads the signed-in user, fills the sidebar and applies the role. */
     init: function (options) {
         const settings = options || {};
+
         return apiCall('/api/auth/me', 'GET')
             .then(function (data) {
                 if (!data.user) {
-                    window.location.href = 'index.html';
+                    App.handleSignedOut('session');
                     return null;
                 }
 
                 App.user = data.user;
+
+                // The session works, so the "just signed in" markers can go.
+                Session.clear();
 
                 App.syncUser(data.user);
                 App.applyRole(data.user.role);
@@ -119,27 +134,90 @@ const App = {
                 App.loadCartCount();
 
                 if (settings.adminOnly && data.user.role !== 'admin') {
-                    App.renderAccessDenied();
+                    App.renderAccessDenied(
+                        'Administrator access required',
+                        'This area is restricted to administrators. Sign in with an admin account to continue.',
+                        'dashboard.html');
+                    return null;
+                }
+
+                if (settings.roles && settings.roles.indexOf(data.user.role) === -1) {
+                    const labels = settings.roles.map(labelForRole).join(' or ');
+                    App.renderAccessDenied(
+                        'This page is not part of your role',
+                        'This page is available to: ' + labels + '. You are signed in as ' +
+                        (data.user.role_label || labelForRole(data.user.role)) + '.',
+                        App.home(data.user.role));
                     return null;
                 }
 
                 return data.user;
             })
-            .catch(function () {
-                window.location.href = 'index.html';
+            .catch(function (error) {
+                // The session was lost (or the API is down) - send the user back
+                // to the login screen with a reason instead of a blank page.
+                App.handleSignedOut(error && error.status === 0 ? 'offline' : 'session');
                 return null;
             });
     },
 
-    renderAccessDenied: function () {
+    /* The API does not know this browser any more.
+
+       Normally that means "please sign in again". But when the user signed in
+       a moment ago the real problem is that the session cookie was not
+       stored, and redirecting again would only start the same loop - so the
+       problem is explained on the page instead. */
+    handleSignedOut: function (reason) {
+        if (reason === 'offline') {
+            App.redirectToLogin('offline');
+            return;
+        }
+
+        const redirects = Session.bumpRedirect();
+
+        if (Session.isFresh() || redirects >= 2) {
+            App.renderSessionProblem();
+            return;
+        }
+
+        App.redirectToLogin('session');
+    },
+
+    /* Explains why the app keeps returning to the login screen. */
+    renderSessionProblem: function () {
         const content = document.querySelector('.app-content');
         if (!content) return;
+
+        content.innerHTML =
+            '<div class="empty-state">' +
+            '<i class="fas fa-plug-circle-xmark"></i>' +
+            '<h3>The session could not be kept</h3>' +
+            '<p>Medistock signed you in, but the API did not store the session cookie, ' +
+            'so every page sent you straight back to the login screen.</p>' +
+            '<p class="mb-3">Open the app and the API on the same address ' +
+            '(for example <code>http://127.0.0.1:5000</code>) and sign in again.</p>' +
+            '<a class="btn btn-primary" href="index.html">Back to sign in</a>' +
+            '</div>';
+    },
+
+    /* Send the user to the login page, remembering where they came from. */
+    redirectToLogin: function (reason) {
+        const next = window.location.pathname.split('/').pop() || '';
+        const target = 'index.html?reason=' + encodeURIComponent(reason || '') +
+            (next && next !== 'index.html' ? '&next=' + encodeURIComponent(next) : '');
+        window.location.href = target;
+    },
+
+    renderAccessDenied: function (title, message, backTo) {
+        const content = document.querySelector('.app-content');
+        if (!content) return;
+
         content.innerHTML =
             '<div class="empty-state">' +
             '<i class="fas fa-lock"></i>' +
-            '<h3>Admin access required</h3>' +
-            '<p>This area is restricted to administrators. Sign in with an admin account to continue.</p>' +
-            '<a class="btn btn-primary" href="dashboard.html">Back to dashboard</a>' +
+            '<h3>' + App.escape(title || 'Access denied') + '</h3>' +
+            '<p>' + App.escape(message || 'You do not have access to this area.') + '</p>' +
+            '<a class="btn btn-primary" href="' + (backTo || 'dashboard.html') + '">Back to my home page</a>' +
             '</div>';
     },
 
@@ -156,7 +234,10 @@ const App = {
     logout: function () {
         apiCall('/api/auth/logout', 'POST')
             .catch(function () { /* ignore network errors */ })
-            .then(function () { window.location.href = 'index.html'; });
+            .then(function () {
+                Session.clear();
+                window.location.href = 'index.html';
+            });
     },
 
     exportCsv: function (filename, rows) {
@@ -189,6 +270,20 @@ const App = {
             return: 'badge-info'
         };
         return map[status] || 'badge-info';
+    },
+
+    /* Render a KPI card description coming from the API. */
+    kpiHtml: function (kpi) {
+        return '<article class="kpi-card ' + App.escape(kpi.tone || 'k-indigo') + '">' +
+            '<div class="kpi-top">' +
+            '<span class="kpi-icon"><i class="fas ' + App.escape(kpi.icon || 'fa-chart-line') + '"></i></span>' +
+            '<span class="kpi-trend">' + App.escape(kpi.trend || '') + '</span>' +
+            '</div>' +
+            '<div class="kpi-value">' + App.escape(kpi.prefix || '') + App.escape(kpi.display) + App.escape(kpi.suffix || '') + '</div>' +
+            '<div class="kpi-label">' + App.escape(kpi.label) + '</div>' +
+            '<div class="kpi-bar"><span class="kpi-bar-fill" style="width:0"></span></div>' +
+            '<div class="kpi-foot">' + App.escape(kpi.hint || '') + '</div>' +
+            '</article>';
     }
 };
 

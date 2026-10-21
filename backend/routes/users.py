@@ -11,7 +11,7 @@ import re
 users_bp = Blueprint('users', __name__)
 bcrypt = Bcrypt()
 
-ROLES = ('admin', 'pharmacist', 'customer')
+ROLES = ('admin', 'pharmacist', 'staff', 'customer')
 
 
 @users_bp.route('/', methods=['GET'])
@@ -32,6 +32,7 @@ def list_users():
             'total_users': len(users),
             'admins': len([u for u in users if u.role == 'admin']),
             'pharmacists': len([u for u in users if u.role == 'pharmacist']),
+            'staff': len([u for u in users if u.role == 'staff']),
             'customers': len([u for u in users if u.role == 'customer']),
             'inactive': len([u for u in users if not u.is_active])
         }

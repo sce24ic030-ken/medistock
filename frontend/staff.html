@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Counter Desk | Medistock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-body" data-page-title="Counter Desk" data-page-sub="Pick, pack and hand over orders">
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <a class="app-brand" href="staff.html">
+                <span class="app-brand-mark"><i class="fas fa-pills"></i></span>
+                <span class="app-brand-text">Medistock<small>Counter Desk</small></span>
+            </a>
+
+            <nav class="app-nav" aria-label="Main navigation"></nav>
+
+            <div class="app-sidebar-foot">
+                <div class="app-user">
+                    <span class="app-avatar"><i class="fas fa-user"></i></span>
+                    <span class="app-user-meta">
+                        <strong id="userName">User</strong>
+                        <small id="userRole">Signed in</small>
+                    </span>
+                </div>
+                <a class="app-logout" href="#" id="appLogout" title="Log out" aria-label="Log out">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main column -->
+        <div class="app-main">
+            <header class="app-topbar">
+                <button class="app-burger" id="appBurger" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="app-topbar-title">
+                    <h1 id="appPageTitle">Counter Desk</h1>
+                    <p id="appPageSub">Pick, pack and hand over orders</p>
+                </div>
+                <div class="app-topbar-actions">
+                    <span class="role-chip" id="roleChip"><i class="fas fa-user-tie"></i><span>Counter Staff</span></span>
+                    <span class="app-live"><span class="app-live-dot"></span> Live</span>
+                    <span class="app-clock" id="appClock"></span>
+                    <a class="app-icon-btn" href="cart.html" title="Cart"><i class="fas fa-cart-shopping"></i></a>
+                </div>
+            </header>
+
+            <main class="app-content">
+                <!-- Hero -->
+                <section class="role-hero role-hero--staff">
+                    <div class="role-hero__main">
+                        <span class="dash-hero-eyebrow"><span class="app-live-dot"></span> <span id="heroEyebrow">Counter desk</span></span>
+                        <h2 class="role-hero__title" id="heroTitle">Welcome</h2>
+                        <p class="role-hero__sub" id="heroSub">Pick, pack and hand over the orders waiting at the counter.</p>
+                        <div class="role-hero__actions" id="heroActions"></div>
+                    </div>
+
+                    <div class="role-hero__side" id="heroFacts"></div>
+                </section>
+
+                <!-- Shift strip: the four counters worked during the shift -->
+                <section class="kpi-grid" id="shiftStrip" aria-label="Shift counters"></section>
+
+                <!-- KPIs -->
+                <section class="kpi-grid" id="kpiGrid"></section>
+
+                <!-- What this page is for -->
+                <div class="role-note">
+                    <i class="fas fa-hand-holding"></i>
+                    <div>
+                        <strong>You are on the counter.</strong> Take the orders in the pick &amp; pack queue one by one - mark them packed once the bag is sealed, then hand them over.
+                        Shelf alerts and the restock list tell you what to pull off the shelf or top up before the next customer arrives.
+                    </div>
+                </div>
+
+                <!-- Pick and pack queue -->
+                <section class="dash-grid">
+                    <article class="panel panel-span-12">
+                        <header class="panel-head">
+                            <div>
+                                <h3>Pick &amp; Pack Queue</h3>
+                                <p>Move every order along - pending, packed, handed over</p>
+                            </div>
+                            <span class="panel-chip" id="queueChip">0 to pack</span>
+                        </header>
+                        <div class="panel-body">
+                            <div class="queue-list" id="queueList"></div>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- Shelf alerts + restock list + today's movements -->
+                <section class="dash-grid">
+                    <article class="panel panel-span-4">
+                        <header class="panel-head">
+                            <div>
+                                <h3>Shelf Alerts</h3>
+                                <p>Low, expiring and expired batches</p>
+                            </div>
+                            <span class="panel-chip chip-danger" id="alertChip">0</span>
+                        </header>
+                        <div class="panel-body panel-scroll" id="alertsList"></div>
+                    </article>
+
+                    <article class="panel panel-span-4">
+                        <header class="panel-head">
+                            <div>
+                                <h3>Restock List</h3>
+                                <p>Batches that need more units</p>
+                            </div>
+                            <span class="panel-chip chip-warn" id="stockChip">0 low</span>
+                        </header>
+                        <div class="panel-body panel-scroll" id="stockList"></div>
+                    </article>
+
+                    <article class="panel panel-span-4">
+                        <header class="panel-head">
+                            <div>
+                                <h3>Today's Movements</h3>
+                                <p>Units received and issued today</p>
+                            </div>
+                            <span class="panel-chip" id="movementChip">0 today</span>
+                        </header>
+                        <div class="panel-body panel-scroll" id="movementList"></div>
+                    </article>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <div class="app-scrim" id="appScrim"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/role-summary.js"></script>
+    <script src="js/staff.js"></script>
+</body>
+</html>

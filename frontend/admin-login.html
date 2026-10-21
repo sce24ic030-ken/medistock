@@ -122,10 +122,11 @@
 
             try {
                 const result = await apiCall('/api/auth/admin/login', 'POST', { email, password });
+                Session.mark(result.user.role);
                 AuthUI.showMessage(alertBox, result.message, 'success');
                 setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 1000);
+                    window.location.href = landingPageFor(result.user.role);
+                }, 700);
             } catch (error) {
                 AuthUI.setLoading(adminLoginForm, false);
                 AuthUI.showMessage(alertBox, error.message, 'danger');

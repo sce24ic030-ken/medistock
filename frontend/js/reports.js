@@ -1,17 +1,10 @@
 let stockData = [];
 
 async function init() {
-    try {
-        const user = await apiCall('/api/auth/me', 'GET');
-        if (!user.user) {
-            window.location.href = 'index.html';
-            return;
-        }
-        document.getElementById('userName').textContent = user.user.name;
-        loadAllReports();
-    } catch (error) {
-        window.location.href = 'index.html';
-    }
+    const user = await App.init({ roles: ['admin', 'pharmacist'] });
+    if (!user) return;
+
+    loadAllReports();
 }
 
 async function loadAllReports() {

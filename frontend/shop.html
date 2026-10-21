@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Medicines | Medistock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-body" data-page-title="Shop Medicines" data-page-sub="Browse the shelf and fill your basket">
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <a class="app-brand" href="customer.html">
+                <span class="app-brand-mark"><i class="fas fa-pills"></i></span>
+                <span class="app-brand-text">Medistock<small>Smart Medicine Inventory</small></span>
+            </a>
+
+            <nav class="app-nav" aria-label="Main navigation"></nav>
+
+            <div class="app-sidebar-foot">
+                <div class="app-user">
+                    <span class="app-avatar"><i class="fas fa-user"></i></span>
+                    <span class="app-user-meta">
+                        <strong id="userName">User</strong>
+                        <small id="userRole">Signed in</small>
+                    </span>
+                </div>
+                <a class="app-logout" href="#" id="appLogout" title="Log out" aria-label="Log out">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main column -->
+        <div class="app-main">
+            <header class="app-topbar">
+                <button class="app-burger" id="appBurger" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="app-topbar-title">
+                    <h1 id="appPageTitle">Shop Medicines</h1>
+                    <p id="appPageSub">Browse the shelf and fill your basket</p>
+                </div>
+                <div class="app-topbar-actions">
+                    <span class="role-chip" id="roleChip"><i class="fas fa-user"></i><span>Customer</span></span>
+                    <span class="app-live"><span class="app-live-dot"></span> Live</span>
+                    <span class="app-clock" id="appClock"></span>
+                    <a class="app-icon-btn" href="cart.html" title="Cart"><i class="fas fa-cart-shopping"></i></a>
+                </div>
+            </header>
+
+            <main class="app-content">
+                <!-- Search + category filters -->
+                <section class="panel">
+                    <header class="panel-head">
+                        <div>
+                            <h3>Shop medicines</h3>
+                            <p>Only medicines that are in stock and not expired are shown</p>
+                        </div>
+                        <span class="panel-chip" id="shopCount">0 medicines</span>
+                    </header>
+                    <div class="panel-body">
+                        <div class="filter-row">
+                            <div style="flex:1 1 320px;max-width:420px;">
+                                <input type="search" id="shopSearch" class="form-control"
+                                    placeholder="Search a medicine or its generic name"
+                                    aria-label="Search medicines">
+                            </div>
+                            <button class="chip-filter" id="clearSearch" type="button">
+                                <i class="fas fa-xmark"></i> Clear
+                            </button>
+                        </div>
+                        <div class="filter-row" id="categoryChips"></div>
+                    </div>
+                </section>
+
+                <!-- Shelf + cart -->
+                <div class="row g-3">
+                    <div class="col-lg-8">
+                        <div id="shopGrid"></div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="panel" style="position:sticky;top:18px;">
+                            <header class="panel-head">
+                                <div>
+                                    <h3>Your basket</h3>
+                                    <p>Everything you picked in this visit</p>
+                                </div>
+                                <span class="panel-chip" id="cartItemsCount">0</span>
+                            </header>
+                            <div class="panel-body">
+                                <div id="cartItems"></div>
+
+                                <div class="d-flex justify-content-between align-items-center"
+                                    style="margin-top:14px;padding-top:12px;border-top:1px solid #f0f2f8;">
+                                    <span style="font-size:0.82rem;color:var(--brand-muted);">Total</span>
+                                    <strong id="cartTotal" style="font-size:1.1rem;color:var(--brand-ink);">$0.00</strong>
+                                </div>
+
+                                <button class="btn btn-primary w-100 mt-3" id="checkoutBtn" type="button"
+                                    onclick="Shop.checkout()">
+                                    <i class="fas fa-circle-check"></i> Checkout
+                                </button>
+                                <a class="btn btn-outline-secondary w-100 mt-2" href="cart.html">
+                                    <i class="fas fa-list"></i> Review full cart
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="app-scrim" id="appScrim"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/role-summary.js"></script>
+    <script src="js/shop.js"></script>
+</body>
+</html>

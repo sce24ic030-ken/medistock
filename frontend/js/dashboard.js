@@ -93,15 +93,21 @@ function clearNotice() {
 
 /* ------------------------------------------------------------------ load */
 
+/* The administrator console is the admin home page - every other role has
+   its own workspace (pharmacist.html / staff.html / customer.html). */
+async function initDashboard() {
+    const user = await App.init({ roles: ['admin'] });
+    if (!user) return;
+
+    applyUser(user);
+    loadDashboard();
+
+    /* Auto refresh the numbers every 30 seconds. */
+    setInterval(loadDashboard, 30000);
+}
+
 async function loadDashboard() {
     try {
-        const user = await apiCall('/api/auth/me', 'GET');
-        if (!user.user) {
-            window.location.href = 'index.html';
-            return;
-        }
-        applyUser(user.user);
-
         const data = await apiCall('/api/dashboard/stats', 'GET');
         let alerts = [];
         try {
@@ -116,8 +122,8 @@ async function loadDashboard() {
         clearNotice();
     } catch (error) {
         console.error(error);
-        if (error && error.message && error.message.includes('401')) {
-            window.location.href = 'index.html';
+        if (error && error.status === 401) {
+            App.handleSignedOut('session');
             return;
         }
         showNotice('Live API unreachable — start the backend (python app.py) to load real data. Showing the last known layout.');
@@ -130,8 +136,7 @@ function applyUser(user) {
 
     const roleEl = document.querySelector('.app-user-meta small');
     if (roleEl) {
-        const labels = { admin: 'Administrator', pharmacist: 'Pharmacist', customer: 'Customer' };
-        roleEl.textContent = labels[user.role] || user.role;
+        roleEl.textContent = user.role_label || labelForRole(user.role);
     }
 
     const hero = document.getElementById('heroName');
@@ -540,7 +545,5 @@ async function logout() {
     window.location.href = 'index.html';
 }
 
-/* Auto refresh every 30 seconds */
-setInterval(loadDashboard, 30000);
-
-loadDashboard();
+/* Auto refresh every 30 seconds is started by initDashboard(). */
+initDashboard();

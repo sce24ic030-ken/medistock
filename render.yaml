@@ -34,6 +34,12 @@ services:
         sync: false
       - key: EXTRA_ORIGINS
         sync: false
+      # The static site and the API are different sites ("onrender.com" is a
+      # public suffix), so the session cookie has to be SameSite=None; Secure.
+      - key: SESSION_COOKIE_SAMESITE
+        value: "None"
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
 
   - type: web
     name: medistock-web

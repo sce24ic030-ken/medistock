@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Workspace | Medistock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="app-body" data-page-title="Pharmacy Workspace" data-page-sub="Dispensing, expiry compliance and stock health">
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <a class="app-brand" href="pharmacist.html">
+                <span class="app-brand-mark"><i class="fas fa-pills"></i></span>
+                <span class="app-brand-text">Medistock<small>Pharmacy Workspace</small></span>
+            </a>
+
+            <nav class="app-nav" aria-label="Main navigation"></nav>
+
+            <div class="app-sidebar-foot">
+                <div class="app-user">
+                    <span class="app-avatar"><i class="fas fa-user"></i></span>
+                    <span class="app-user-meta">
+                        <strong id="userName">User</strong>
+                        <small id="userRole">Signed in</small>
+                    </span>
+                </div>
+                <a class="app-logout" href="#" id="appLogout" title="Log out" aria-label="Log out">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main column -->
+        <div class="app-main">
+            <header class="app-topbar">
+                <button class="app-burger" id="appBurger" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="app-topbar-title">
+                    <h1 id="appPageTitle">Pharmacy Workspace</h1>
+                    <p id="appPageSub">Dispensing, expiry compliance and stock health</p>
+                </div>
+                <div class="app-topbar-actions">
+                    <span class="role-chip" id="roleChip"><i class="fas fa-user-graduate"></i><span>Pharmacist</span></span>
+                    <span class="app-live"><span class="app-live-dot"></span> Live</span>
+                    <span class="app-clock" id="appClock"></span>
+                    <a class="app-icon-btn" href="cart.html" title="Cart"><i class="fas fa-cart-shopping"></i></a>
+                </div>
+            </header>
+
+            <main class="app-content">
+                <!-- Hero -->
+                <section class="role-hero role-hero--pharmacist">
+                    <div class="role-hero__main">
+                        <span class="dash-hero-eyebrow"><span class="app-live-dot"></span> <span id="heroEyebrow">Pharmacy workspace</span></span>
+                        <h2 class="role-hero__title" id="heroTitle">Welcome</h2>
+                        <p class="role-hero__sub" id="heroSub">Dispensing, expiry compliance and stock health for your pharmacy.</p>
+                        <div class="role-hero__actions" id="heroActions"></div>
+                    </div>
+
+                    <div class="role-hero__side" id="heroFacts"></div>
+                </section>
+
+                <!-- KPIs -->
+                <section class="kpi-grid" id="kpiGrid"></section>
+
+                <!-- Expiry watchlist + category mix -->
+                <section class="dash-grid">
+                    <article class="panel panel-span-7">
+                        <header class="panel-head">
+                            <div>
+                                <h3>Expiry Watchlist</h3>
+                                <p>Batches that expire within 30 days - discount, rotate or return them</p>
+                            </div>
+                            <span class="panel-chip chip-warn" id="expiryChip">0</span>
+                        </header>
+                        <div class="panel-body" id="expiryList"></div>
+                    </article>
+
+                    <article class="panel panel-span-5">
+                        <header class="panel-head">
+                            <div>
+                                <h3>Category Mix</h3>
+                                <p>Units held per therapeutic area</p>
+                            </div>
+                            <span class="panel-chip" id="categoryChip">—</span>
+                        </header>
+                        <div class="panel-body">
+                            <div class="chart-wrap">
+                                <canvas id="categoryChart"></canvas>
+                                <div class="chart-center" id="categoryCenter">
+                                    <strong id="categoryTotal">0</strong>
+                                    <span>Units</span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- Fulfilment queue -->
+                <section class="dash-grid">
+                    <article class="panel panel-span-12">
+                        <header class="panel-head">
+                            <div>
+                                <h3>Fulfilment Queue</h3>
+                                <p>Orders waiting to be picked, packed or handed over</p>
+                            </div>
+                            <a class="panel-chip" href="orders.html" style="text-decoration:none;">Open orders</a>
+                        </header>
+                        <div class="panel-body">
+                            <div class="queue-list" id="queueList"></div>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- Alerts + activity -->
+                <section class="dash-grid">
+                    <article class="panel panel-span-5">
+                        <header class="panel-head">
+                            <div>
+                                <h3>Expiry &amp; Stock Alerts</h3>
+                                <p>Everything that must not stay on the shelf</p>
+                            </div>
+                            <span class="panel-chip chip-danger" id="alertChip">0</span>
+                        </header>
+                        <div class="panel-body panel-scroll" id="alertsList"></div>
+                    </article>
+
+                    <article class="panel panel-span-7">
+                        <header class="panel-head">
+                            <div>
+                                <h3>Recent Activity</h3>
+                                <p>Dispensing and stock events recorded in the system</p>
+                            </div>
+                        </header>
+                        <div class="panel-body panel-scroll" id="activityList"></div>
+                    </article>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <div class="app-scrim" id="appScrim"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/role-summary.js"></script>
+    <script src="js/pharmacist.js"></script>
+</body>
+</html>

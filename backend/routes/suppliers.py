@@ -3,13 +3,13 @@ from models import db
 from models.supplier import Supplier
 from models.medicine import Medicine
 from models.activity import Activity
-from utils.decorators import login_required, admin_required
+from utils.decorators import login_required, admin_required, counter_required
 
 suppliers_bp = Blueprint('suppliers', __name__)
 
 
 @suppliers_bp.route('/', methods=['GET'])
-@login_required
+@counter_required
 def list_suppliers():
     try:
         suppliers = Supplier.query.order_by(Supplier.name.asc()).all()
@@ -35,7 +35,7 @@ def list_suppliers():
 
 
 @suppliers_bp.route('/<int:supplier_id>', methods=['GET'])
-@login_required
+@counter_required
 def get_supplier(supplier_id):
     try:
         supplier = Supplier.query.get(supplier_id)

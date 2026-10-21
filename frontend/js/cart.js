@@ -1,16 +1,9 @@
 async function init() {
-    try {
-        const user = await apiCall('/api/auth/me', 'GET');
-        if (!user.user) {
-            window.location.href = 'index.html';
-            return;
-        }
-        document.getElementById('userName').textContent = user.user.name;
-        loadCart();
-        loadCartCount();
-    } catch (error) {
-        window.location.href = 'index.html';
-    }
+    const user = await App.init();
+    if (!user) return;
+
+    loadCart();
+    loadCartCount();
 }
 
 async function loadCart() {
@@ -85,7 +78,9 @@ async function checkout() {
         try {
             const result = await apiCall('/api/cart/checkout', 'POST');
             alert(result.message + ' Order #' + result.order_id);
-            window.location.href = 'dashboard.html';
+            // Back to the home page of the signed-in role (a customer lands
+            // on the customer home, never on the admin dashboard).
+            window.location.href = App.home(App.user && App.user.role);
         } catch (error) {
             alert(error.message);
         }

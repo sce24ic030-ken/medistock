@@ -14,4 +14,7 @@ with app.app_context():
 
     print("\nAdmin:       admin@smartmed.com / Admin@123")
     print("Pharmacist:  pharmacist@smartmed.com / Pharmacist@123")
+    print("Staff:       ravi@smartmed.com / Staff@123")
+    print("Staff:       sana@smartmed.com / Staff@123")
     print("Customer:    customer@test.com / Customer@123")
+    print("Customer:    aisha@smartmed.com / Customer@123")

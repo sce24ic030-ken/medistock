@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from config import Config
 from models import db
@@ -32,15 +32,28 @@ from routes.users import users_bp
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# The frontend lives next to the backend in the repository. Serving it from the
+# same Flask process means the whole app runs on a single origin, so the
+# session cookie is a first-party cookie and no CORS/cookie dance is needed.
+FRONTEND_DIR = os.path.normpath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend')
+)
+
 # Initialize extensions
 db.init_app(app)
+
+# The frontend may be served from any local port during development
+# (Live Server on 5500, VS Code on 8080, python -m http.server on 8000, ...),
+# so every loopback origin is allowed with credentials. The deployed origins
+# still come from FRONTEND_URL / EXTRA_ORIGINS.
 CORS(app, supports_credentials=True, resources={r"/api/*": {
     "origins": [
         app.config['FRONTEND_URL'],
         'http://localhost:5500', 'http://127.0.0.1:5500',
         'http://localhost:8080', 'http://127.0.0.1:8080',
         'http://localhost:8000', 'http://127.0.0.1:8000',
-        'http://localhost:3000', 'http://127.0.0.1:3000'
+        'http://localhost:3000', 'http://127.0.0.1:3000',
+        r'http://localhost:\d+', r'http://127\.0\.0\.1:\d+'
     ] + app.config.get('EXTRA_ORIGINS', [])
 }})
 
@@ -59,6 +72,18 @@ app.register_blueprint(users_bp, url_prefix='/api/users')
 
 @app.route('/')
 def home():
+    """The login page - the API also serves the frontend so both share an origin."""
+    return send_from_directory(FRONTEND_DIR, 'index.html')
+
+
+@app.route('/<path:filename>')
+def frontend_files(filename):
+    """Serve the frontend assets (html/css/js) bundled with the API."""
+    return send_from_directory(FRONTEND_DIR, filename)
+
+
+@app.route('/api/info')
+def api_info():
     return jsonify({
         'message': 'Medistock - Smart Medicine Inventory Management System API',
         'status': 'running',

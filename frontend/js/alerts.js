@@ -59,7 +59,11 @@ function renderAlerts() {
         return;
     }
 
-    const admin = App.user && App.user.role === 'admin';
+    // Everyone behind the counter can restock a batch; editing the catalogue
+    // itself stays with the catalogue managers (admin + pharmacist).
+    const role = App.user ? App.user.role : '';
+    const canRestock = ['admin', 'pharmacist', 'staff'].indexOf(role) !== -1;
+    const canEditCatalogue = ['admin', 'pharmacist'].indexOf(role) !== -1;
 
     list.innerHTML = filtered.map(function (alert) {
         const meta = TYPE_META[alert.type] || { icon: 'fa-circle-info', cls: 'alert-info' };
@@ -76,11 +80,14 @@ function renderAlerts() {
         if (medicine.batch_no) details.push('Batch ' + medicine.batch_no);
         if (supplier) details.push('Supplier: ' + supplier);
 
-        const actions = admin
-            ? '<button class="btn-ghost" style="padding:0.35rem 0.7rem;font-size:0.75rem;" ' +
-              'onclick="restock(' + medicine.id + ', 25)"><i class="fas fa-plus"></i> Restock 25</button>' +
-              '<a class="icon-btn" title="Edit medicine" href="medicines.html"><i class="fas fa-pen"></i></a>'
-            : '<a class="icon-btn" title="View medicine" href="medicines.html"><i class="fas fa-capsules"></i></a>';
+        const actions =
+            (canRestock
+                ? '<button class="btn-ghost" style="padding:0.35rem 0.7rem;font-size:0.75rem;" ' +
+                  'onclick="restock(' + medicine.id + ', 25)"><i class="fas fa-plus"></i> Restock 25</button>'
+                : '') +
+            (canEditCatalogue
+                ? '<a class="icon-btn" title="Edit medicine" href="medicines.html"><i class="fas fa-pen"></i></a>'
+                : '<a class="icon-btn" title="View medicine" href="medicines.html"><i class="fas fa-capsules"></i></a>');
 
         return '<div class="alert-center-item">' +
             '<span class="alert-center-icon ' + meta.cls + '"><i class="fas ' + meta.icon + '"></i></span>' +
@@ -141,7 +148,8 @@ function exportAlerts() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    App.init().then(function () {
+    App.init({ roles: ['admin', 'pharmacist', 'staff'] }).then(function (user) {
+        if (!user) return;
         loadAlerts();
 
         document.getElementById('alertSearch').addEventListener('input', renderAlerts);

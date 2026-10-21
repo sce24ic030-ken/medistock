@@ -28,8 +28,9 @@ USERS = [
     {'name': 'Admin User', 'email': 'admin@smartmed.com', 'password': 'Admin@123', 'role': 'admin', 'phone': '+91 90000 00001'},
     {'name': 'John Doe', 'email': 'customer@test.com', 'password': 'Customer@123', 'role': 'customer', 'phone': '+91 90000 00002'},
     {'name': 'Nisha Sharma', 'email': 'pharmacist@smartmed.com', 'password': 'Pharmacist@123', 'role': 'pharmacist', 'phone': '+91 90000 00003'},
-    {'name': 'Ravi Patel', 'email': 'ravi@smartmed.com', 'password': 'Staff@123', 'role': 'pharmacist', 'phone': '+91 90000 00004'},
-    {'name': 'Aisha Khan', 'email': 'aisha@smartmed.com', 'password': 'Customer@123', 'role': 'customer', 'phone': '+91 90000 00005'}
+    {'name': 'Ravi Patel', 'email': 'ravi@smartmed.com', 'password': 'Staff@123', 'role': 'staff', 'phone': '+91 90000 00004'},
+    {'name': 'Aisha Khan', 'email': 'aisha@smartmed.com', 'password': 'Customer@123', 'role': 'customer', 'phone': '+91 90000 00005'},
+    {'name': 'Sana Mirza', 'email': 'sana@smartmed.com', 'password': 'Staff@123', 'role': 'staff', 'phone': '+91 90000 00006'}
 ]
 
 SUPPLIERS = [
@@ -60,10 +61,10 @@ MEDICINES = [
 
 ORDERS = [
     {'customer': 'customer@test.com', 'status': 'completed', 'days': 12, 'items': [('Paracetamol 500mg', 6), ('Vitamin C 500mg', 10)]},
-    {'customer': 'customer@test.com', 'status': 'completed', 'days': 8, 'items': [('Ibuprofen 400mg', 4), ('Cetirizine 10mg', 2)]},
-    {'customer': 'aisha@smartmed.com', 'status': 'packed', 'days': 3, 'items': [('Amlodipine 5mg', 5), ('Metformin 500mg', 3)]},
-    {'customer': 'aisha@smartmed.com', 'status': 'pending', 'days': 1, 'items': [('Azithromycin 500mg', 2), ('Pantoprazole 40mg', 1)]},
-    {'customer': 'customer@test.com', 'status': 'completed', 'days': 21, 'items': [('Vitamin D3 60K', 3), ('Insulin Glargine 100U', 1)]},
+    {'customer': 'customer@test.com', 'status': 'packed', 'days': 1, 'items': [('Ibuprofen 400mg', 4), ('Cetirizine 10mg', 2)]},
+    {'customer': 'aisha@smartmed.com', 'status': 'packed', 'days': 0, 'items': [('Amlodipine 5mg', 5), ('Metformin 500mg', 3)]},
+    {'customer': 'aisha@smartmed.com', 'status': 'pending', 'days': 0, 'items': [('Azithromycin 500mg', 2), ('Pantoprazole 40mg', 1)]},
+    {'customer': 'customer@test.com', 'status': 'pending', 'days': 0, 'items': [('Vitamin D3 60K', 3), ('Insulin Glargine 100U', 1)]},
     {'customer': 'aisha@smartmed.com', 'status': 'cancelled', 'days': 6, 'items': [('Omeprazole 20mg', 2)]}
 ]
 
@@ -118,6 +119,11 @@ def seed_all(verbose=True):
             db.session.add(user)
             db.session.commit()
             log(f"  user created: {entry['email']} / {entry['password']} ({entry['role']})")
+        elif user.role != entry['role']:
+            # Keep the demo roles in sync when the seed list changes.
+            log(f"  user role updated: {entry['email']} {user.role} -> {entry['role']}")
+            user.role = entry['role']
+            db.session.commit()
         created_users[entry['email']] = user
 
     admin = created_users['admin@smartmed.com']
@@ -154,13 +160,49 @@ def seed_all(verbose=True):
     log(f"  {len(MEDICINES)} medicines seeded!")
 
     # ---------------------------------------------------------------- orders
-    if Order.query.count() == 0:
-        for spec in ORDERS:
+    # Demo orders are always re-dated so the counter desk always has a
+    # realistic "today" queue, whatever day the seed was last run.
+    used_orders = []
+    for spec in ORDERS:
+        customer = created_users[spec['customer']]
+        created_at = datetime.utcnow() - timedelta(days=spec['days'])
+
+        # The demo order of this customer: first one with the same status,
+        # then - so a status change in this file updates the existing order
+        # instead of creating a second copy of it - one with the same items.
+        candidates = Order.query.filter_by(user_id=customer.id).all()
+        order = None
+
+        for candidate in candidates:
+            if candidate.id in used_orders:
+                continue
+            if candidate.status == spec['status']:
+                order = candidate
+                break
+
+        if order is None:
+            wanted = sorted(name for name, _ in spec['items'])
+            for candidate in candidates:
+                if candidate.id in used_orders:
+                    continue
+                names = sorted(
+                    (item.medicine.name if item.medicine else '')
+                    for item in candidate.items
+                )
+                if names == wanted:
+                    order = candidate
+                    break
+
+        if order is None:
+            order = Order(user_id=customer.id, total_amount=0.0, status=spec['status'])
+            db.session.add(order)
+
+        order.status = spec['status']
+        order.created_at = created_at
+        used_orders.append(order.id)
+
+        if not order.items:
             total = 0.0
-            order = Order(user_id=created_users[spec['customer']].id,
-                          total_amount=0.0,
-                          status=spec['status'],
-                          created_at=datetime.utcnow() - timedelta(days=spec['days']))
             for medicine_name, quantity in spec['items']:
                 medicine = Medicine.query.filter_by(name=medicine_name).first()
                 if not medicine:
@@ -170,30 +212,40 @@ def seed_all(verbose=True):
                                              price_at_purchase=medicine.price))
                 total += medicine.price * quantity
             order.total_amount = round(total, 2)
-            db.session.add(order)
 
-        db.session.commit()
-        log(f"  {len(ORDERS)} orders seeded!")
+    db.session.commit()
+    log(f"  {len(ORDERS)} demo orders seeded!")
 
     # ------------------------------------------------------------- movements
-    if StockMovement.query.count() == 0:
-        for index, (medicine_name, change, reason, reference, note) in enumerate(MOVEMENTS):
-            medicine = Medicine.query.filter_by(name=medicine_name).first()
-            if not medicine:
-                continue
-            db.session.add(StockMovement(
-                medicine_id=medicine.id,
-                change=change,
-                balance_after=medicine.quantity,
-                reason=reason,
-                reference=reference,
-                note=note,
-                user_id=admin.id,
-                created_at=datetime.utcnow() - timedelta(days=len(MOVEMENTS) - index)
-            ))
+    # The ledger is re-dated as well so "today" always shows real activity.
+    for index, (medicine_name, change, reason, reference, note) in enumerate(MOVEMENTS):
+        medicine = Medicine.query.filter_by(name=medicine_name).first()
+        if not medicine:
+            continue
 
-        db.session.commit()
-        log(f"  {len(MOVEMENTS)} stock movements seeded!")
+        created_at = datetime.utcnow() - timedelta(hours=(len(MOVEMENTS) - index) * 5)
+        movement = StockMovement.query.filter_by(reason=reason, reference=reference).first()
+
+        if movement is None:
+            movement = StockMovement(medicine_id=medicine.id,
+                                     change=change,
+                                     balance_after=medicine.quantity,
+                                     reason=reason,
+                                     reference=reference,
+                                     note=note,
+                                     user_id=admin.id)
+            db.session.add(movement)
+        else:
+            movement.medicine_id = medicine.id
+            movement.change = change
+            movement.balance_after = medicine.quantity
+            movement.note = note
+            movement.user_id = admin.id
+
+        movement.created_at = created_at
+
+    db.session.commit()
+    log(f"  {len(MOVEMENTS)} stock movements seeded!")
 
     # -------------------------------------------------------------- feedback
     if Feedback.query.count() == 0:

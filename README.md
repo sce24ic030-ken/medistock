@@ -43,49 +43,81 @@ Smart-Medicine-Inventory/
 │   ├── seed.py            # idempotent demo data
 │   └── requirements.txt
 └── frontend/
-    ├── *.html             # 16 pages (4 auth + 12 app tabs)
+    ├── *.html             # 20 pages (4 auth + 16 app tabs)
     ├── css/style.css      # full design system
-    └── js/                # page scripts + shared nav.js / ui.js
+    └── js/                # page scripts + shared nav.js / ui.js / role-summary.js
 ```
 
 ---
 
-## Tabs & Features (12 app tabs + 4 auth pages)
+## Tabs & Features (16 app tabs + 4 auth pages)
 
 ### Authentication
 | Page | What it does |
 |---|---|
-| `index.html` | Split-screen login — animated brand panel (rotating headline, orbit rings, floating particles, count-up stats, 10 feature chips), remember-email, password reveal |
+| `index.html` | Split-screen login — animated brand panel (rotating headline, orbit rings, floating particles, count-up stats, 10 feature chips), remember-email, password reveal. The screen always fills the window: both halves scroll inside themselves instead of pushing the page down |
 | `signup.html` | Register a new customer account |
 | `admin-login.html` | Admin console sign-in (separate entry point) |
 | `forgot-password.html` | Request a reset token, then set a new password |
 
-### Signed-in app tabs
-| Tab | File | What it does |
+### Role home pages (each role lands on its own screen)
+
+| Role | Home page | What it shows |
 |---|---|---|
-| **Dashboard** | `dashboard.html` | Hero with animated counters, 6 KPI cards with trend bars, Chart.js category + expiry charts, stock-health meter, smart alerts panel, recent activity timeline |
-| **Medicines** | `medicines.html` | Add / edit / delete, search, category filter, live stock & expiry columns |
-| **Orders** | `orders.html` | Order register with search + status filter, revenue KPIs, create order, update fulfilment status, CSV export |
-| **Cart** | `cart.html` | Add to cart, update quantity, remove, totals, checkout deducts stock |
-| **Smart Alerts** | `alerts.html` | Unified alert centre (low stock / expiring / expired), severity grouping, one-click **Restock 25** |
-| **Stock Ledger** | `movements.html` | Every stock movement (purchase / sale / adjustment / return) with running quantity and reason filter |
-| **Suppliers** | `suppliers.html` | Supplier directory, contact details, lead time, linked catalogue, add / edit / deactivate |
-| **Reports** | `reports.html` | Stock, low stock, expiring, expired and activity reports, CSV export, print-to-PDF |
-| **Feedback** | `feedback.html` | Star rating + comments from customers |
-| **FAQs & Contact** | `faqs.html` | Accordion FAQs plus a contact form |
-| **Users & Roles** | `users.html` | Admin-only user directory: role changes, activate/deactivate, add user |
-| **Profile** | `profile.html` | Edit name/phone, change password, notification preferences, sign out |
+| Administrator | `dashboard.html` | Hero with animated counters, KPI cards with trend bars, Chart.js category + expiry charts, stock-health meter, smart alerts panel, recent activity timeline |
+| Pharmacist | `pharmacist.html` | Dispensing queue, expiring batches, prescription-style order queue, stock to review, quick restock / order actions |
+| Counter Staff | `staff.html` | Orders to pack, units issued today, today's stock movements, shelf alerts, one-click status updates |
+| Customer | `customer.html` (+ `shop.html`) | Personal dashboard (my orders, spend, reorders) and a browsable medicine shop with cart |
+
+### Shared app tabs
+| Tab | File | Who can open it | What it does |
+|---|---|---|---|
+| **Medicines** | `medicines.html` | admin, pharmacist, staff | Add / edit / delete (admin + pharmacist), search, category filter, live stock & expiry columns, counter-sale |
+| **Orders** | `orders.html` | all roles | Order register with search + status filter, revenue KPIs, create order, update fulfilment status, CSV export. Customers only see their own orders |
+| **Shop medicines** | `shop.html` | customer | Browse the catalogue, search, add to cart |
+| **Cart** | `cart.html` | all roles | Add to cart, update quantity, remove, totals, checkout deducts stock |
+| **Smart Alerts** | `alerts.html` | admin, pharmacist, staff | Unified alert centre (low stock / expiring / expired), severity grouping, one-click **Restock 25** |
+| **Stock Ledger** | `movements.html` | admin, pharmacist, staff | Every stock movement (purchase / sale / adjustment / return) with running quantity and reason filter |
+| **Suppliers** | `suppliers.html` | admin, pharmacist, staff | Supplier directory, contact details, lead time, linked catalogue, add / edit / deactivate (admin only writes) |
+| **Reports** | `reports.html` | admin, pharmacist | Stock, low stock, expiring, expired and activity reports, CSV export, print-to-PDF |
+| **Feedback** | `feedback.html` | all roles | Star rating + comments from customers |
+| **FAQs & Contact** | `faqs.html` | all roles | Accordion FAQs plus a contact form |
+| **Users & Roles** | `users.html` | admin | Admin-only user directory: role changes, activate/deactivate, add user |
+| **Profile** | `profile.html` | all roles | Edit name/phone, change password, notification preferences, sign out |
+
+### Role access rules
+
+| Capability | admin | pharmacist | staff | customer |
+|---|:--:|:--:|:--:|:--:|
+| Own home page | `dashboard.html` | `pharmacist.html` | `staff.html` | `customer.html` + `shop.html` |
+| See every order / update fulfilment | yes | yes | yes | own orders only |
+| See the catalogue | yes | yes | yes | shop only |
+| Create / edit / delete medicines | yes | create + edit | – | – |
+| Smart alerts, stock ledger, suppliers (read) | yes | yes | yes | – |
+| Reports | yes | yes | – | – |
+| Manage suppliers (write) | yes | – | – | – |
+| Users & roles | yes | – | – | – |
+
+The rules are enforced twice: the sidebar and the page buttons hide what a role may not use
+(`data-roles="admin,pharmacist"`), and the API rejects the call with `role_required` /
+`counter_required` so the UI can never be bypassed.
 
 ### Cross-cutting features
-- **Role-based access** — `admin`, `pharmacist`, `customer`. Admin-only tabs and buttons are hidden
-  for everyone else and protected on the API with `admin_required`.
+- **Role-based access** — `admin`, `pharmacist`, `staff`, `customer`. Admin-only tabs and buttons are hidden
+  for everyone else and protected on the API with `role_required` / `counter_required`.
+- **One shared role payload** — `GET /api/dashboard/summary` answers with the blocks the signed-in
+  role actually needs (KPIs, alerts, order queue, stock, activity, movements, medicines, charts).
+  `js/role-summary.js` renders it, so every role page shows live data with its own layout.
+- **No login loop** — the session cookie is kept on the same hostname as the page
+  (`js/config.js` mirrors `location.hostname`), and if the API still loses the session the app
+  explains the problem on the page instead of bouncing between the login screen and the home page.
 - **Smart alerts** — red below 10 units, amber within 30 days of expiry, red when expired.
 - **Full-screen app shell** — collapsible sidebar, sticky top bar, live clock, cart badge,
   toasts, responsive down to mobile.
 - **Shared helpers** — `js/nav.js` renders the whole sidebar (brand, 4 nav groups, 12 links,
   user block) from one source of truth, so adding a tab needs no HTML edits.
   `js/ui.js` provides `App.escape / money / number / date / daysUntil / toast / exportCsv /
-  statusBadge / adminOnly`.
+  statusBadge / kpiHtml / applyRole`.
 - **Permanent storage** — every record lives in Aiven MySQL.
 
 ---
@@ -135,13 +167,17 @@ recreated from the Render dashboard in one click:
 
 ## Demo Credentials (created by `seed.py`)
 
-| Role | Email | Password |
-|---|---|---|
-| Admin | `admin@smartmed.com` | `Admin@123` |
-| Pharmacist | `pharmacist@smartmed.com` | `Pharmacist@123` |
-| Pharmacist | `ravi@smartmed.com` | `Staff@123` |
-| Customer | `customer@test.com` | `Customer@123` |
-| Customer | `aisha@smartmed.com` | `Customer@123` |
+| Role | Email | Password | Lands on |
+|---|---|---|---|
+| Administrator | `admin@smartmed.com` | `Admin@123` | `dashboard.html` |
+| Pharmacist | `pharmacist@smartmed.com` | `Pharmacist@123` | `pharmacist.html` |
+| Counter Staff | `ravi@smartmed.com` | `Staff@123` | `staff.html` |
+| Counter Staff | `sana@smartmed.com` | `Staff@123` | `staff.html` |
+| Customer | `customer@test.com` | `Customer@123` | `customer.html` |
+| Customer | `aisha@smartmed.com` | `Customer@123` | `customer.html` |
+
+Every account is created on the first `seed.py` run; re-running it only refreshes the demo
+orders and stock movements so the counter desk always shows a realistic "today" queue.
 
 Sample data seeded: 16 medicines with batches and suppliers, 4 suppliers, 6 orders,
 12 stock movements, 3 feedback entries, activity history, and alerts across all severities.

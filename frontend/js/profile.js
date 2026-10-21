@@ -38,8 +38,8 @@ function renderProfile(user) {
     document.getElementById('profileName').textContent = user.name;
     document.getElementById('profileEmail').textContent = user.email;
 
-    const roleLabels = { admin: 'Administrator', pharmacist: 'Pharmacist', customer: 'Customer' };
-    document.getElementById('profileRole').textContent = roleLabels[user.role] || user.role;
+    const roleLabels = { admin: 'Administrator', pharmacist: 'Pharmacist', staff: 'Counter Staff', customer: 'Customer' };
+    document.getElementById('profileRole').textContent = user.role_label || roleLabels[user.role] || user.role;
     document.getElementById('profilePhone').textContent = user.phone || 'Not set';
     document.getElementById('profileSince').textContent = App.date(user.created_at);
     document.getElementById('profileLogin').textContent = user.last_login ? App.dateTime(user.last_login) : 'First session';

@@ -136,7 +136,8 @@ function exportLedger() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    App.init().then(function () {
+    App.init({ roles: ['admin', 'pharmacist', 'staff'] }).then(function (user) {
+        if (!user) return;
         loadMovements();
         loadMedicines();
 

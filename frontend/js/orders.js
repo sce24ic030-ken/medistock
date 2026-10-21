@@ -1,8 +1,21 @@
-/* Medistock - Orders tab */
+/* Medistock - Orders tab
+
+   Counter staff (admin, pharmacist, staff) work the full order register and
+   move orders through the fulfilment states. A customer only ever sees their
+   own orders, so the page is relabelled and the counter actions disappear. */
 let orders = [];
 let orderSummary = {};
 let currentStatus = 'all';
 let medicineCatalogue = [];
+
+const COUNTER_ROLES = ['admin', 'pharmacist', 'staff'];
+
+function setKpiLabel(valueId, text) {
+    const value = document.getElementById(valueId);
+    const card = value ? value.closest('.kpi-card') : null;
+    const label = card ? card.querySelector('.kpi-label') : null;
+    if (label) label.textContent = text;
+}
 
 function renderOrderSummary(summary) {
     orderSummary = summary || {};
@@ -117,7 +130,7 @@ function viewOrder(id) {
                 '<small class="text-muted d-block">Order total</small>' +
                 '<strong style="font-size:1.25rem;color:var(--brand-ink)">' + App.money(order.total_amount) + '</strong>' +
                 '</div></div>' +
-                (App.user && App.user.role === 'admin'
+                (App.user && ['admin', 'pharmacist', 'staff'].indexOf(App.user.role) !== -1
                     ? '<hr><small class="text-muted d-block mb-2">Update fulfilment status</small>' +
                       '<div class="d-flex gap-2 flex-wrap">' +
                       ['pending', 'packed', 'completed', 'cancelled'].map(function (status) {
@@ -194,9 +207,22 @@ function exportOrders() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    App.init().then(function () {
+    App.init().then(function (user) {
+        if (!user) return;
+
+        const isCustomer = user.role === 'customer';
+
+        if (isCustomer) {
+            document.body.setAttribute('data-page-title', 'My Orders');
+            document.body.setAttribute('data-page-sub', 'Every purchase you made, order by order');
+            setKpiLabel('kpiOrders', 'My Orders');
+            setKpiLabel('kpiRevenue', 'Total Spend');
+            setKpiLabel('kpiAvg', 'Average Spend');
+            setKpiLabel('kpiUnits', 'Items Bought');
+        }
+
         loadOrders();
-        loadMedicinesForOrder();
+        if (!isCustomer) loadMedicinesForOrder();
 
         document.getElementById('orderSearch').addEventListener('input', function (event) {
             clearTimeout(window.__orderSearchTimer);

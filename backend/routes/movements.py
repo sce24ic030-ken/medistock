@@ -3,7 +3,7 @@ from models import db
 from models.movement import StockMovement
 from models.medicine import Medicine
 from models.activity import Activity
-from utils.decorators import login_required, admin_required
+from utils.decorators import login_required, admin_required, counter_required
 from sqlalchemy import func
 
 movements_bp = Blueprint('movements', __name__)
@@ -12,7 +12,7 @@ REASONS = ('purchase', 'sale', 'adjustment', 'return', 'expiry')
 
 
 @movements_bp.route('/', methods=['GET'])
-@login_required
+@counter_required
 def list_movements():
     try:
         query = StockMovement.query
@@ -46,7 +46,7 @@ def list_movements():
 
 
 @movements_bp.route('/', methods=['POST'])
-@admin_required
+@counter_required
 def create_movement():
     """Record a stock movement (purchase, sale, adjustment, return)."""
     try:

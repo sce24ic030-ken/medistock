@@ -151,15 +151,41 @@
 
             try {
                 const result = await apiCall('/api/auth/login', 'POST', { email, password });
-                AuthUI.showMessage(alertBox, result.message || 'Login successful', 'success');
+
+                // Remember the sign-in so a broken session cookie can be
+                // reported instead of looping between login and home.
+                Session.mark(result.user.role);
+
+                // Every role lands on its own home page.
+                const next = new URLSearchParams(window.location.search).get('next');
+                const target = landingPageFor(result.user.role, next);
+
+                AuthUI.showMessage(alertBox, 'Signed in as ' + (result.user.role_label || labelForRole(result.user.role)) + '. Opening your workspace...', 'success');
                 setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 900);
+                    window.location.href = target;
+                }, 700);
             } catch (error) {
                 AuthUI.showMessage(alertBox, error.message, 'danger');
                 AuthUI.setLoading(e.target, false);
             }
         });
+
+        // Tell the user why they are back on the login screen.
+        (function () {
+            const reason = new URLSearchParams(window.location.search).get('reason');
+            if (!reason) return;
+
+            const messages = {
+                session: 'Your session expired. Please sign in again.',
+                offline: 'The Medistock API could not be reached. Start the backend and try again.'
+            };
+
+            AuthUI.showMessage(
+                document.getElementById('alertBox'),
+                messages[reason] || 'Please sign in to continue.',
+                reason === 'offline' ? 'danger' : 'warning'
+            );
+        })();
     </script>
 </body>
 

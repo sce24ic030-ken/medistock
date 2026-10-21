@@ -47,9 +47,9 @@ function renderUsers() {
 
         const roleSelect = '<select class="form-select form-select-sm" style="max-width:150px;border-radius:10px;" ' +
             'onchange="changeRole(' + user.id + ', this.value)">' +
-            ['admin', 'pharmacist', 'customer'].map(function (role) {
+            ['admin', 'pharmacist', 'staff', 'customer'].map(function (role) {
                 return '<option value="' + role + '"' + (user.role === role ? ' selected' : '') + '>' +
-                    role.charAt(0).toUpperCase() + role.slice(1) + '</option>';
+                    (labelForRole(role)) + '</option>';
             }).join('') + '</select>';
 
         const statusToggle = '<label class="switch" title="' + (active ? 'Deactivate' : 'Activate') + '">' +
@@ -147,7 +147,7 @@ function exportUsers() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    App.init({ adminOnly: true }).then(function (user) {
+    App.init({ roles: ['admin'] }).then(function (user) {
         if (!user) return;
 
         loadUsers();
