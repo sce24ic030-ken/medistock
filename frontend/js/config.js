@@ -1,9 +1,15 @@
 // Backend API URL
-// For local development
-const API_BASE_URL = 'http://127.0.0.1:5000';
-
-// For production (update after deploying to Render)
-// const API_BASE_URL = 'https://your-backend-app.onrender.com';
+// Production (Render)  : https://medistock-api-zudg.onrender.com
+// Local development    : http://127.0.0.1:5000
+//
+// The deployed site talks to the live Render API, while a local copy of the
+// frontend keeps talking to the local Flask server. Override it any time with
+//   window.MEDISTOCK_API_URL = 'https://...'
+const LOCAL_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0'];
+const API_BASE_URL = window.MEDISTOCK_API_URL
+    || (LOCAL_HOSTS.indexOf(location.hostname) !== -1
+        ? 'http://127.0.0.1:5000'
+        : 'https://medistock-api-zudg.onrender.com');
 
 async function apiCall(endpoint, method = 'GET', data = null) {
     const options = {
