@@ -530,6 +530,127 @@ body {
     color: rgba(255, 255, 255, 0.68);
 }
 
+/* ---------- Sign-in information ----------
+   The login screen keeps what it knows: the account that signed in last and
+   the demo accounts of the seeded database. Both are shown in the form
+   panel so the information is never hidden in the code. */
+.auth-info {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    margin-top: 1.25rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 12px;
+    border: 1px solid #e3e7fb;
+    background: #f7f8ff;
+    font-size: 0.8rem;
+    color: var(--brand-muted);
+}
+
+/* A class rule with a display value beats the [hidden] attribute, so the
+   element has to be hidden explicitly. */
+.auth-info[hidden],
+.auth-info-line[hidden] {
+    display: none;
+}
+
+.auth-info > i {
+    color: var(--brand-indigo);
+}
+
+.auth-info strong {
+    color: var(--brand-indigo);
+    font-weight: 700;
+}
+
+.auth-info__action {
+    margin-left: auto;
+    border: 1px solid var(--brand-indigo);
+    background: transparent;
+    color: var(--brand-indigo);
+    border-radius: 999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.auth-info__action:hover {
+    background: var(--brand-indigo);
+    color: #fff;
+}
+
+.auth-info-line {
+    margin: 0.85rem 0 0;
+    padding: 0.6rem 0.8rem;
+    border-radius: 10px;
+    background: rgba(77, 87, 233, 0.08);
+    color: var(--brand-indigo);
+    font-size: 0.78rem;
+}
+
+.auth-demo {
+    margin-top: 1.25rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid #eceff9;
+}
+
+.auth-demo__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--brand-muted);
+}
+
+.auth-demo__title i {
+    color: var(--brand-indigo);
+}
+
+.auth-demo__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.7rem;
+}
+
+.auth-demo__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid #e3e7fb;
+    background: #fff;
+    color: #4a5068;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.auth-demo__chip i {
+    color: var(--brand-indigo);
+}
+
+.auth-demo__chip:hover {
+    transform: translateY(-2px);
+    border-color: var(--brand-indigo);
+    color: var(--brand-indigo);
+    box-shadow: 0 8px 18px rgba(77, 87, 233, 0.16);
+}
+
+.auth-demo__hint {
+    margin: 0.6rem 0 0;
+    font-size: 0.72rem;
+    color: #9aa0b4;
+}
+
 /* ---------- Form panel ---------- */
 .auth-form-side {
     display: flex;
@@ -1174,6 +1295,35 @@ body {
     display: flex;
     height: 100%;
     width: 100%;
+    transition: opacity 0.14s ease, transform 0.14s ease;
+}
+
+/* ---------- Tab switch ----------
+   Every page is its own document, so the browser paints a fresh page for
+   every tab. The old page fades out first, which turns the hard cut into a
+   smooth move, and the progress bar shows that something is happening. */
+html.is-leaving .app-shell {
+    opacity: 0;
+    transform: translateY(6px);
+}
+
+.app-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 0;
+    border-radius: 0 3px 3px 0;
+    background: linear-gradient(90deg, var(--brand-indigo, #4d57e9), #7a4bf0);
+    opacity: 0;
+    z-index: 90;
+    pointer-events: none;
+    transition: width 0.28s ease, opacity 0.2s ease;
+}
+
+.app-progress.is-running {
+    width: 72%;
+    opacity: 1;
 }
 
 /* ---------- Sidebar ---------- */

@@ -93,6 +93,22 @@
                     Not an administrator? <a href="index.html" class="auth-link">Back to user login</a>
                 </p>
 
+                <div class="auth-info" id="lastAccount" hidden></div>
+
+                <p class="auth-info-line" id="loginInfo" hidden></p>
+
+                <div class="auth-demo">
+                    <span class="auth-demo__title"><i class="fas fa-flask"></i> Demo admin account</span>
+                    <div class="auth-demo__list">
+                        <button type="button" class="auth-demo__chip" data-demo-email="admin@smartmed.com"
+                                data-demo-password="Admin@123" data-demo-role="Administrator"
+                                data-demo-lands="dashboard.html">
+                            <i class="fas fa-shield-halved"></i><span>Administrator</span>
+                        </button>
+                    </div>
+                    <p class="auth-demo__hint">Pick the role to fill the form with its demo credentials.</p>
+                </div>
+
                 <div class="auth-foot">
                     <a href="faqs.html">FAQs</a>
                     <a href="index.html"><i class="fas fa-arrow-left"></i> Back to login</a>
@@ -123,6 +139,11 @@
             try {
                 const result = await apiCall('/api/auth/admin/login', 'POST', { email, password });
                 Session.mark(result.user.role);
+
+                // Keep the account that signed in - it is shown on the login
+                // screen the next time.
+                AuthUI.rememberAccount(result.user);
+
                 AuthUI.showMessage(alertBox, result.message, 'success');
                 setTimeout(() => {
                     window.location.href = landingPageFor(result.user.role);

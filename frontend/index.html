@@ -127,6 +127,39 @@
                     New to Medistock? <a href="signup.html" class="auth-link">Create an account</a>
                 </p>
 
+                <!-- Sign-in information: the account that signed in last and the
+                     demo accounts of the seeded database. -->
+                <div class="auth-info" id="lastAccount" hidden></div>
+
+                <p class="auth-info-line" id="loginInfo" hidden></p>
+
+                <div class="auth-demo">
+                    <span class="auth-demo__title"><i class="fas fa-flask"></i> Demo accounts</span>
+                    <div class="auth-demo__list">
+                        <button type="button" class="auth-demo__chip" data-demo-email="admin@smartmed.com"
+                                data-demo-password="Admin@123" data-demo-role="Administrator"
+                                data-demo-lands="dashboard.html">
+                            <i class="fas fa-shield-halved"></i><span>Administrator</span>
+                        </button>
+                        <button type="button" class="auth-demo__chip" data-demo-email="pharmacist@smartmed.com"
+                                data-demo-password="Pharmacist@123" data-demo-role="Pharmacist"
+                                data-demo-lands="pharmacist.html">
+                            <i class="fas fa-user-graduate"></i><span>Pharmacist</span>
+                        </button>
+                        <button type="button" class="auth-demo__chip" data-demo-email="ravi@smartmed.com"
+                                data-demo-password="Staff@123" data-demo-role="Counter Staff"
+                                data-demo-lands="staff.html">
+                            <i class="fas fa-user-tie"></i><span>Counter Staff</span>
+                        </button>
+                        <button type="button" class="auth-demo__chip" data-demo-email="customer@test.com"
+                                data-demo-password="Customer@123" data-demo-role="Customer"
+                                data-demo-lands="customer.html">
+                            <i class="fas fa-user"></i><span>Customer</span>
+                        </button>
+                    </div>
+                    <p class="auth-demo__hint">Pick a role to fill the form with its demo credentials.</p>
+                </div>
+
                 <div class="auth-foot">
                     <a href="faqs.html">FAQs &amp; contact</a>
                     <a href="admin-login.html"><i class="fas fa-shield-halved"></i> Admin console</a>
@@ -156,6 +189,10 @@
                 // reported instead of looping between login and home.
                 Session.mark(result.user.role);
 
+                // Keep the account that signed in - the login screen shows it
+                // next time so the details are never lost.
+                AuthUI.rememberAccount(result.user);
+
                 // Every role lands on its own home page.
                 const next = new URLSearchParams(window.location.search).get('next');
                 const target = landingPageFor(result.user.role, next);
@@ -167,6 +204,7 @@
             } catch (error) {
                 AuthUI.showMessage(alertBox, error.message, 'danger');
                 AuthUI.setLoading(e.target, false);
+                document.getElementById('password').focus();
             }
         });
 

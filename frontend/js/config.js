@@ -101,15 +101,26 @@ function landingPageFor(role, next) {
    instead of bouncing the user between the two screens forever. */
 const Session = {
     LOGIN_AT: 'smi.loginAt',
+    LOGIN_ROLE: 'smi.loginRole',
     REDIRECTS: 'smi.loginRedirects',
 
-    /* Remember that a sign-in just succeeded. */
+    /* Remember that a sign-in just succeeded (and as which role). */
     mark: function (role) {
         try {
             sessionStorage.setItem(Session.LOGIN_AT, String(Date.now()));
+            sessionStorage.setItem(Session.LOGIN_ROLE, String(role || ''));
             sessionStorage.removeItem(Session.REDIRECTS);
         } catch (error) {
             /* storage unavailable - ignore */
+        }
+    },
+
+    /* The role of the sign-in that happened in this session. */
+    role: function () {
+        try {
+            return sessionStorage.getItem(Session.LOGIN_ROLE) || '';
+        } catch (error) {
+            return '';
         }
     },
 

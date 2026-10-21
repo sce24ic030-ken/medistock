@@ -3,6 +3,12 @@
 let categoryChart = null;
 let expiryChart = null;
 
+/* Signatures of the data the charts were built from. A chart is only rebuilt
+   when its data really changed - destroying and recreating a canvas is what
+   makes the console flash on every refresh. */
+let categoryChartSignature = '';
+let expiryChartSignature = '';
+
 const CATEGORY_COLORS = [
     '#4d57e9', '#00b894', '#7a4bf0', '#f39c12', '#e74c3c',
     '#2b2a72', '#00cec9', '#ef7d28', '#4b7bec', '#a29bfe'
@@ -31,35 +37,24 @@ function activityStyle(action) {
 
 /* ---------------------------------------------------------------- helpers */
 
+/* Counts a number up to its target.
+
+   The shared helper keeps the final value, so the number can be settled
+   instantly when the tab is hidden - a background tab throttles the timer
+   and the counter would otherwise be left half way. */
 function animateNumber(element, target, options) {
     if (!element) return;
 
     const opts = options || {};
-    const decimals = opts.decimals || 0;
-    const prefix = opts.prefix || '';
-    const suffix = opts.suffix || '';
-    const duration = opts.duration || 1100;
 
-    function format(value) {
-        return prefix + value.toLocaleString('en-US', {
-            minimumFractionDigits: decimals,
-            maximumFractionDigits: decimals
-        }) + suffix;
-    }
-
-    // Timer based rather than requestAnimationFrame: rAF is paused in background
-    // tabs, which would leave the counters stuck at zero.
-    const started = performance.now();
-
-    const timer = setInterval(function () {
-        const progress = Math.min((performance.now() - started) / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        element.textContent = format(target * eased);
-        if (progress >= 1) {
-            element.textContent = format(target);
-            clearInterval(timer);
-        }
-    }, 16);
+    App.countUp(element, {
+        value: target,
+        prefix: opts.prefix || '',
+        suffix: opts.suffix || '',
+        decimals: opts.decimals || 0,
+        duration: opts.duration || 1100,
+        animate: opts.animate
+    });
 }
 
 function setBar(id, percent) {
@@ -100,13 +95,37 @@ async function initDashboard() {
     if (!user) return;
 
     applyUser(user);
-    loadDashboard();
 
-    /* Auto refresh the numbers every 30 seconds. */
-    setInterval(loadDashboard, 30000);
+    /* The count-up only plays the first time the console is opened. Coming
+       back to the tab shows the final numbers straight away - replaying the
+       animation on every tab switch is what made the console flicker. */
+    loadDashboard({ animate: App.firstVisit('dashboard.html') });
+
+    /* Auto refresh the numbers every 30 seconds.
+
+       The refresh never runs while the tab is in the background and never
+       replays the animations, so coming back to the tab does not make the
+       console flash. When the tab becomes visible again the numbers are
+       refreshed silently instead. */
+    setInterval(function () {
+        if (document.hidden) return;
+        loadDashboard({ animate: false });
+    }, 30000);
+
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) loadDashboard({ animate: false });
+    });
 }
 
-async function loadDashboard() {
+/* The payload of the last render - used to skip a render when nothing
+   changed, because rebuilding the DOM (and the charts) is what makes the
+   page flicker. */
+let lastDashboardSignature = '';
+
+async function loadDashboard(options) {
+    const opts = options || {};
+    const animate = opts.animate !== false;
+
     try {
         const data = await apiCall('/api/dashboard/stats', 'GET');
         let alerts = [];
@@ -117,7 +136,13 @@ async function loadDashboard() {
             alerts = [];
         }
 
-        renderDashboard(data, alerts);
+        const signature = JSON.stringify([data.stats, alerts, data.category_data, data.expiry_timeline]);
+
+        if (signature !== lastDashboardSignature) {
+            lastDashboardSignature = signature;
+            renderDashboard(data, alerts, animate);
+        }
+
         loadCartCount();
         clearNotice();
     } catch (error) {
@@ -145,7 +170,7 @@ function applyUser(user) {
 
 /* --------------------------------------------------------------- render */
 
-function renderDashboard(data, alerts) {
+function renderDashboard(data, alerts, animate) {
     const stats = data.stats || {};
     const total = stats.total_medicines || 0;
     const units = stats.total_stock_units || 0;
@@ -153,17 +178,18 @@ function renderDashboard(data, alerts) {
     const low = stats.low_stock || 0;
     const expiring = stats.expiring_soon || 0;
     const expired = stats.expired || 0;
+    const motion = { animate: animate !== false };
 
-    animateNumber(document.getElementById('heroUsers'), stats.total_users || 0);
-    animateNumber(document.getElementById('heroOrders'), stats.total_orders || 0);
-    animateNumber(document.getElementById('heroValue'), value, { prefix: '$', decimals: 2 });
+    animateNumber(document.getElementById('heroUsers'), stats.total_users || 0, motion);
+    animateNumber(document.getElementById('heroOrders'), stats.total_orders || 0, motion);
+    animateNumber(document.getElementById('heroValue'), value, { prefix: '$', decimals: 2, animate: motion.animate });
 
-    animateNumber(document.getElementById('totalMedicines'), total);
-    animateNumber(document.getElementById('totalStockUnits'), units);
-    animateNumber(document.getElementById('stockValue'), value, { prefix: '$', decimals: 2 });
-    animateNumber(document.getElementById('lowStock'), low);
-    animateNumber(document.getElementById('expiringSoon'), expiring);
-    animateNumber(document.getElementById('expiredCount'), expired);
+    animateNumber(document.getElementById('totalMedicines'), total, motion);
+    animateNumber(document.getElementById('totalStockUnits'), units, motion);
+    animateNumber(document.getElementById('stockValue'), value, { prefix: '$', decimals: 2, animate: motion.animate });
+    animateNumber(document.getElementById('lowStock'), low, motion);
+    animateNumber(document.getElementById('expiringSoon'), expiring, motion);
+    animateNumber(document.getElementById('expiredCount'), expired, motion);
 
     const health = computeHealth(total, units, value, alerts, stats);
     renderHealth(health, total, units, value);
@@ -391,8 +417,10 @@ function renderActivities(activities) {
 function renderCharts(data) {
     const categoryData = data.category_data || [];
     const canvas = document.getElementById('categoryChart');
+    const categorySignature = JSON.stringify(categoryData);
 
-    if (canvas) {
+    if (canvas && categorySignature !== categoryChartSignature) {
+        categoryChartSignature = categorySignature;
         const context = canvas.getContext('2d');
         if (categoryChart) categoryChart.destroy();
 
@@ -448,11 +476,14 @@ function renderCharts(data) {
     setText('categoryChip', (data.category_data || []).length + ' categories');
 
     const timelineCanvas = document.getElementById('expiryChart');
-    if (timelineCanvas) {
+    const timeline = data.expiry_timeline || [];
+    const timelineSignature = JSON.stringify(timeline);
+
+    if (timelineCanvas && timelineSignature !== expiryChartSignature) {
+        expiryChartSignature = timelineSignature;
         const timelineContext = timelineCanvas.getContext('2d');
         if (expiryChart) expiryChart.destroy();
 
-        const timeline = data.expiry_timeline || [];
         const fill = timelineContext.createLinearGradient(0, 0, 0, 300);
         fill.addColorStop(0, 'rgba(243, 156, 18, 0.38)');
         fill.addColorStop(1, 'rgba(243, 156, 18, 0.02)');

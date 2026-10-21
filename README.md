@@ -55,7 +55,7 @@ Smart-Medicine-Inventory/
 ### Authentication
 | Page | What it does |
 |---|---|
-| `index.html` | Split-screen login — animated brand panel (rotating headline, orbit rings, floating particles, count-up stats, 10 feature chips), remember-email, password reveal. The screen always fills the window: both halves scroll inside themselves instead of pushing the page down |
+| `index.html` | Split-screen login — animated brand panel (rotating headline, orbit rings, floating particles, count-up stats, 10 feature chips), remember-email, password reveal, demo account chips (one click fills the form) and the account that signed in last. The screen always fills the window: both halves scroll inside themselves instead of pushing the page down |
 | `signup.html` | Register a new customer account |
 | `admin-login.html` | Admin console sign-in (separate entry point) |
 | `forgot-password.html` | Request a reset token, then set a new password |
@@ -114,6 +114,14 @@ The rules are enforced twice: the sidebar and the page buttons hide what a role 
 - **Smart alerts** — red below 10 units, amber within 30 days of expiry, red when expired.
 - **Full-screen app shell** — collapsible sidebar, sticky top bar, live clock, cart badge,
   toasts, responsive down to mobile.
+- **Flicker-free tab switching** — every tab fades out instead of blinking, the page behind is
+  prefetched on hover, the app background is painted before the stylesheet arrives (no white
+  flash) and the count-up animations only play the first time a tab is opened. Numbers that
+  were still counting are settled when a tab is put in the background, so nothing jumps when
+  the user comes back.
+- **Login keeps its information** — the typed address survives a reload, "remember email"
+  keeps it between visits, the account that signed in last is shown with a "use again" button
+  and the demo accounts of the seeded database can be filled in with one click.
 - **Shared helpers** — `js/nav.js` renders the whole sidebar (brand, 4 nav groups, 12 links,
   user block) from one source of truth, so adding a tab needs no HTML edits.
   `js/ui.js` provides `App.escape / money / number / date / daysUntil / toast / exportCsv /

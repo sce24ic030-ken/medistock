@@ -289,6 +289,86 @@ const App = {
         return map[status] || 'badge-info';
     },
 
+    /* Name of the page that is currently open. */
+    page: function () {
+        return (window.location.pathname.split('/').pop() || 'dashboard.html').toLowerCase();
+    },
+
+    /* True the first time a page is opened in this browser session.
+
+       The app pages use it to decide whether the entrance animations may
+       play. Coming back to a tab shows the final numbers straight away
+       instead of counting up again - that replay is what made the console
+       flicker every time another tab was opened. */
+    firstVisit: function (page) {
+        const key = 'smi.seen.' + (page || App.page());
+        try {
+            if (sessionStorage.getItem(key)) return false;
+            sessionStorage.setItem(key, String(Date.now()));
+            return true;
+        } catch (error) {
+            return true;
+        }
+    },
+
+    /* Animate a number from zero to its target.
+
+       A background tab throttles timers, so a count-up can be left half way
+       and jump while the user is looking at it. Every animated number keeps
+       its final value so it can be settled instantly. */
+    countUp: function (element, options) {
+        if (!element) return;
+
+        const opts = options || {};
+        const value = Number(opts.value || 0);
+        const prefix = opts.prefix || '';
+        const suffix = opts.suffix || '';
+        const decimals = opts.decimals || 0;
+        const duration = opts.duration === undefined ? 1000 : opts.duration;
+
+        function format(number) {
+            return prefix + number.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            }) + suffix;
+        }
+
+        const finalText = format(value);
+        element.dataset.finalValue = finalText;
+
+        // No animation asked for (background refresh, tab that was opened
+        // before) or a hidden tab: show the value straight away.
+        if (opts.animate === false || duration <= 0 || document.hidden) {
+            element.textContent = finalText;
+            return;
+        }
+
+        // Timer based rather than requestAnimationFrame: rAF is paused in
+        // background tabs, which would leave the counters stuck at zero.
+        const started = Date.now();
+
+        const timer = setInterval(function () {
+            const progress = Math.min((Date.now() - started) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            element.textContent = format(value * eased);
+            if (progress >= 1) {
+                clearInterval(timer);
+                element.textContent = finalText;
+            }
+        }, 16);
+    },
+
+    /* Finish every number that is still counting up.
+
+       Called when the tab is hidden or comes back to the foreground: a
+       background tab throttles the timers, so a counter would otherwise be
+       left half way and jump as soon as the user looks at the page. */
+    settleNumbers: function () {
+        document.querySelectorAll('[data-final-value]').forEach(function (element) {
+            element.textContent = element.dataset.finalValue;
+        });
+    },
+
     /* Render a KPI card description coming from the API. */
     kpiHtml: function (kpi) {
         return '<article class="kpi-card ' + App.escape(kpi.tone || 'k-indigo') + '">' +

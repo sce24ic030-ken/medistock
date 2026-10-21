@@ -22,6 +22,10 @@ const RolePage = {
                     .then(function (data) {
                         RolePage.data = data;
                         if (typeof page === 'function') page(data, user);
+                        // When switching back to a backgrounded tab the counters
+                        // can freeze mid-animation; settle them when visible.
+                        if (document.hidden) RolePage.settleCounters();
+                        else RolePage.bindVisibilityGuard();
                         return data;
                     });
             })
@@ -81,14 +85,19 @@ const RolePage = {
         RolePage.animateKpis(container);
     },
 
-    /* Count the KPI numbers up once they are in the DOM. */
+    /* Count the KPI numbers up once they are in the DOM.
+
+       The count-up only plays the first time the page is opened in this
+       session. Switching back to the tab shows the final numbers straight
+       away instead of replaying the animation - that replay is what made
+       the workspace flicker every time a tab was opened. */
     animateKpis: function (container) {
+        const animate = App.firstVisit();
         const cards = container.querySelectorAll('.kpi-card');
+
         cards.forEach(function (card, index) {
             const valueEl = card.querySelector('.kpi-value');
             const barEl = card.querySelector('.kpi-bar-fill');
-            const kpi = (RolePage.data.kpis || [])[0];
-            void kpi;
 
             setTimeout(function () {
                 if (barEl) barEl.style.width = '100%';
@@ -104,23 +113,33 @@ const RolePage = {
                 if (isNaN(number)) return;
 
                 const decimals = (match[2].split('.')[1] || '').length;
-                const started = Date.now();
-                const duration = 900;
 
-                const timer = setInterval(function () {
-                    const progress = Math.min((Date.now() - started) / duration, 1);
-                    const eased = 1 - Math.pow(1 - progress, 3);
-                    const current = number * eased;
-                    valueEl.textContent = prefix + current.toLocaleString('en-US', {
-                        minimumFractionDigits: decimals,
-                        maximumFractionDigits: decimals
-                    }) + suffix;
-                    if (progress >= 1) {
-                        valueEl.textContent = raw;
-                        clearInterval(timer);
-                    }
-                }, 16);
+                // App.countUp keeps the final value, so the number can be
+                // settled instantly when the tab is hidden.
+                App.countUp(valueEl, {
+                    value: number,
+                    prefix: prefix,
+                    suffix: suffix,
+                    decimals: decimals,
+                    duration: 900,
+                    animate: animate
+                });
             }, index * 60);
+        });
+    },
+
+    /* A background tab throttles the animation timers, so a count-up can be
+       left half way. When the tab is hidden the number jumps straight to its
+       final value - no flicker when the user comes back. */
+    settleCounters: function () {
+        if (typeof App !== 'undefined' && App.settleNumbers) App.settleNumbers();
+    },
+
+    bindVisibilityGuard: function () {
+        if (RolePage._visibilityBound) return;
+        RolePage._visibilityBound = true;
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) RolePage.settleCounters();
         });
     },
 
